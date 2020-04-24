@@ -57,30 +57,37 @@ class HospitalGraph:
 
     def draw_edges(self):
 
-        # Add edges between doors and the associated room
         for door in self.doors:
+
+            # Add edges between interior ('a') door node and the associated room
             for r in range(self.num_rooms):
                 room = 'r' + '%02d' % r
-                weight = r
-                if room in door:
+                # weight = r
+                if room in door and 'a' in door:
                     self.G.add_edge(room, door)  #, weight=r)
+
+            # Add edges between interior ('a') and exterior ('b') doors
+            for door_b in self.doors:
+                if door_b[:-1] in door and door_b is not door:
+                    if not self.G.has_edge(door, door_b):
+                        self.G.add_edge(door, door_b)
 
         # Add edges between halls and door 0 of adjacent rooms
         for num in range(self.num_halls):  # Loop through list of hall links
             hall_str = 'h' + '%02d' % num  # Get the string for the specific hallway
             for rm_num in self.hall_room_links[num]:
-                for n in ['a', 'b']:
-                    door_to_add = 'r' + '%02d' % rm_num + '_d00' + n
-                    self.G.add_edge(hall_str, door_to_add)  #, weight=num+rm_num)
+                door_to_add = 'r' + '%02d' % rm_num + '_d00' + 'b'
+                self.G.add_edge(hall_str, door_to_add)  #, weight=num+rm_num)
 
         # Add edges for additional doors
         if self.hall_room_extra:
             self.G.add_edges_from(self.hall_room_extra)
 
         # Add edges between connected hallways
-        for (h0, h1) in self.connected_halls:
-            hall_weight = int(h0[-2:]) + int(h1[-2:])
-            self.G.add_edge(h0, h1)  #, weight=hall_weight)
+        if self.connected_halls:
+            for (h0, h1) in self.connected_halls:
+                hall_weight = int(h0[-2:]) + int(h1[-2:])
+                self.G.add_edge(h0, h1)  #, weight=hall_weight)
 
 
     def plot_graph(self):
@@ -118,7 +125,8 @@ if __name__ == "__main__":
     hall2_rooms = [2]
     hall_door_links = [hall0_rooms, hall1_rooms, hall2_rooms]
 
-    extra_door_hall_links = [('r02_d01a', 'h02'), ('r02_d01b', 'h02')]  # Yes it's obnoxious notation but I couldn't think of a better way
+    # Connect exterior ('b') door to adjacent hall
+    extra_door_hall_links = [('r02_d01b', 'h02')]  # Yes it's obnoxious notation but I couldn't think of a better way
 
     connected_halls = [('h00', 'h01'), ('h01', 'h02'), ('h02', 'h00')]  # Order irrelevant
 
