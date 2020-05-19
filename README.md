@@ -17,6 +17,16 @@ Scripts that do stuff:
 * gather_edge_data.py - subscribes to topic outputting the robot's current node - times how long it takes to switch nodes, updates the 'weight' interval (in hospital class). Currently just prints to screen but will be updated to read from / print to file
 
 
+Dependencies:
+-
+ROS Packages:
+* Turtlebot3-*
+* Navstack
+* dwa-local-planner
+
+Python packages:
+* Networkx
+
  To Run:
 -
 * Terminal 1 
