@@ -19,15 +19,17 @@ Scripts that do stuff:
 
  To Run:
 -
-* Terminal 1 - turtlebot launch file
-* Terminal 2 - rosrun \<package name> move_base.py
-* Terminal 3 - rosrun \<package name> publish_node_location.py 
-* Terminal 4 - rosrun \<package name> gather_edge_data.py
+* Terminal 1 - 
+> export TURTLEBOT3_MODEL=burger
+> roslaunch hospital_world turtlebot_two_rooms.launch
+* Terminal 2 - rosrun hospital_world move_base.py
+* Terminal 3 - rosrun hospital_world publish_node_location.py 
+* Terminal 4 - rosrun hospital_world gather_edge_data.py
 
 Still to do:
 - 
 * Print interval out to file (pickle the hospital world when exiting)
 * Launch all nodes from one launch file
-* Make this into a ros package instead of a bunch of random files
+-* Make this into a ros package instead of a bunch of random files-
 * Redo the timing logic - nodes are currently large spaces, so 'reaching' the node could be anywhere from one end of the hall to the other - messes up the timing.
 * Clean up move_base file - some of the comments / commented out sections are leftover from an old project
