@@ -19,12 +19,23 @@ Scripts that do stuff:
 
  To Run:
 -
-* Terminal 1 - 
-> export TURTLEBOT3_MODEL=burger
-> roslaunch hospital_world turtlebot_two_rooms.launch
-* Terminal 2 - rosrun hospital_world move_base.py
-* Terminal 3 - rosrun hospital_world publish_node_location.py 
-* Terminal 4 - rosrun hospital_world gather_edge_data.py
+* Terminal 1 
+```
+export TURTLEBOT3_MODEL=burger
+roslaunch hospital_world turtlebot_two_rooms.launch
+```
+* Terminal 2
+```
+rosrun hospital_world move_base.py
+```
+* Terminal 3 
+```
+rosrun hospital_world publish_node_location.py 
+```
+* Terminal 4 
+```
+rosrun hospital_world gather_edge_data.py
+```
 
 Still to do:
 - 
