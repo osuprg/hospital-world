@@ -53,4 +53,4 @@ Still to do:
 * Redo the timing logic - nodes are currently large spaces, so 'reaching' the node could be anywhere from one end of the hall to the other - messes up the timing.
 * ~~Print interval out to file (pickle the hospital world when exiting)~~
 * ~~Make this into a ros package instead of a bunch of random files~~
-* ~~Clean up move_base file - some of the comments / commented out sections are leftover from an old project
+* ~~Clean up move_base file - some of the comments / commented out sections are leftover from an old project~~
