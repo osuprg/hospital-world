@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 from interval_cust import Interval as cust_interval
+from os import getcwd
 
 """
 Rooms are in the format 'r##'
@@ -31,12 +32,12 @@ class HospitalGraph:
         self.rooms = None                       # Contains string representations of all room nodes
         self.halls = None                       # Contains string representations of all hall nodes
         self.doors = []                         # Contains string representations of all door nodes
-        self.hall_room_links = hall_door_links
-        self.hall_room_extra = hall_room_extra
-        self.connected_halls = connected_halls
-        self.draw_nodes()
-        self.draw_edges()
-        self.add_weights()
+        self.hall_room_links = hall_door_links  # List of which halls and doors are connected
+        self.hall_room_extra = hall_room_extra  # List of extra doors (i.e. not door 0) are connected to what halls
+        self.connected_halls = connected_halls  # List of which halls are connected together
+        self.draw_nodes()                       # Draw all the nodes
+        self.draw_edges()                       # Connect the appropriate nodes
+        self.add_weights()                      # Add weights to the edges
 
     def draw_nodes(self):
         # Creates rooms in the format r## - numbers below 10 have a 0 appended in front for easier comparison
@@ -106,6 +107,7 @@ class HospitalGraph:
                 self.G.add_edge(h0, h1)
 
     def add_weights(self):
+        # Set up to add weights that are a custom interval of [0, 0]
         for (n1, n2) in self.G.edges():
             self.G[n1][n2]['weight'] = cust_interval(0)
 
@@ -120,8 +122,10 @@ class HospitalGraph:
         plt.show()
 
 
-def pickle_it(obj_to_pickle, filename):
-    pickle.dump(obj_to_pickle, open(filename, 'wb'))
+def pickle_it(obj_to_pickle, file_path_and_name):
+    with open(file_path_and_name, 'wb') as f:
+        pickle.dump(obj_to_pickle, f)
+    print("Saving information to file named {}".format(file_path_and_name))
 
 
 def unpickle_it(filename):

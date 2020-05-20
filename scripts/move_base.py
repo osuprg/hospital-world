@@ -11,28 +11,29 @@ from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from std_msgs.msg import String
 from random import uniform, choice
-from time import time
-from two_rooms_v3_parameters import TwoRoomsParameters as p
 
+# CHANGE THIS TO POINT TO YOUR PARAMETERS FILE
+from two_rooms_v3_parameters import TwoRoomsParameters as p
 
 
 # Name inspired by this artist - http://www.robotsinrowboats.com/
 class MoveRobotAround:
     def __init__(self, param):
-        self.current_position = None
-        self.current_node = None
+        self.current_position = None        # Keeps track of robot's current x,y position
+        self.current_node = None            # Keeps track of what node the robot is in
 
-        self.next_goal = (0.0, 0.0)  # Initialize robot's initial location
-        self.prior_goal = (0.0, 0.0)
-        self.break_goal = (-3.16, 8.22)
-        self.result_from_path = 3
+        self.next_goal = (0.0, 0.0)         # Initialize robot's initial location
+        self.prior_goal = (0.0, 0.0)        # Initialize robot's prior goal with its starting position
+        self.break_goal = (-3.16, 8.22)     # Goal to test the move_base- should be outside the bounds
+        self.result_from_path = 3           # Result of a successful path
 
-        self.p = param
+        self.p = param                      # Parameters of given world
 
-        self.rooms = []
-        self._init_rooms_list()
+        self.rooms = []                     # List of rooms - used to determine next goal
+        self._init_rooms_list()             # Initialize list of rooms
 
     def _init_rooms_list(self):
+        # Initilaize list of rooms
         self.rooms = ['r' + '%02d' % i for i in range(self.p.num_rooms)]
 
     def set_current_pose(self, msg):
@@ -40,9 +41,11 @@ class MoveRobotAround:
         self.current_position = (msg.pose.pose.position.x, msg.pose.pose.position.y)
 
     def set_current_node(self, msg):
+        # Saves robot's current node after listening to topic that broadcasts that data
         self.current_node = msg.data
 
     def select_new_goal(self):
+        # Choose a different room to navigate to
         new_room = self.current_node
         while new_room == self.current_node:
             new_room = choice(self.rooms)
@@ -173,29 +176,5 @@ if __name__ == '__main__':
     except rospy.ROSInterruptException:
         rospy.loginfo("Navigation test finished.")
         raise
-
-    # # Save path info to csv
-    # with open('./src/me599_proj/Results/planned_paths.csv', mode='w') as path_file:
-    #     path_writer = csv.writer(path_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-    #
-    #     for num_paths in range(total_iterations):
-    #         write_paths = [rowboat_robot.x_paths[num_paths], rowboat_robot.y_paths[num_paths]]
-    #         path_writer.writerow(write_paths)
-    #
-    # # Save odom info to csv
-    # with open('./src/me599_proj/Results/odom_paths.csv', mode='w') as odom_file:
-    #     odom_writer = csv.writer(odom_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-    #
-    #     for num_odom in range(len(rowboat_robot.x_odom)):
-    #         write_odom = [rowboat_robot.x_odom[num_odom], rowboat_robot.y_odom[num_odom]]
-    #         odom_writer.writerow(write_odom)
-    #
-    # # Save path metadata to csv
-    # with open('./src/me599_proj/Results/path_metadata.csv', mode='w') as meta_file:
-    #     meta_writer = csv.writer(meta_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-    #
-    #     for num_meta in range(len(rowboat_robot.all_paths_info)):
-    #         write_meta = [rowboat_robot.all_paths_info[num_meta]]
-    #         meta_writer.writerow(write_meta)
 
     print("done!")
