@@ -12,8 +12,8 @@ from geometry_msgs.msg import PoseWithCovarianceStamped
 from std_msgs.msg import String
 from random import uniform, choice
 
-# CHANGE THIS TO POINT TO YOUR PARAMETERS FILE
-from two_rooms_v3_parameters import TwoRoomsParameters as p
+# CHANGE THESE TO POINT TO YOUR PARAMETERS FILE INFO
+from hospital_parameters import HospitalParameters as Parameters
 
 
 # Name inspired by this artist - http://www.robotsinrowboats.com/
@@ -21,6 +21,9 @@ class MoveRobotAround:
     def __init__(self, param):
         self.current_position = None        # Keeps track of robot's current x,y position
         self.current_node = None            # Keeps track of what node the robot is in
+
+        # CHANGE THIS TOO
+        self.initial_pose = param.initial_pose
 
         self.next_goal = (0.0, 0.0)         # Initialize robot's initial location
         self.prior_goal = (0.0, 0.0)        # Initialize robot's prior goal with its starting position
@@ -38,7 +41,9 @@ class MoveRobotAround:
 
     def set_current_pose(self, msg):
         # Get the current position of the robot and store it
-        self.current_position = (msg.pose.pose.position.x, msg.pose.pose.position.y)
+        self.current_position = (msg.pose.pose.position.x + self.initial_pose[0],
+                                 msg.pose.pose.position.y + self.initial_pose[1])
+        # print("Current position", self.current_position)
 
     def set_current_node(self, msg):
         # Saves robot's current node after listening to topic that broadcasts that data
@@ -59,7 +64,13 @@ class MoveRobotAround:
 
             # Check that it is not in a convex portion of the room
             # TODO: Change this to check ALL 'excl' portions of the map / find a better way to ignore those portions
-            if not (self.next_goal[0] in self.p.nodes_dict['excl'][0] and self.next_goal[1] in self.p.nodes_dict['excl'][1]):
+            exclusions = [key for key in self.p.nodes_dict if 'ex' in key]
+            trigger = False
+            for key in exclusions:
+                if self.next_goal[0] in self.p.nodes_dict[key][0] and self.next_goal[1] in self.p.nodes_dict[key][1]:
+                    trigger = True
+
+            if not trigger:
                 valid = True
 
         # print("Next goal chosen:", self.next_goal)
@@ -81,16 +92,18 @@ class MoveRobotAround:
             # Go back to the last point
             self.next_goal = self.prior_goal
 
-        print("new goal selected:", self.next_goal)
+        print("new goal selected: ", self.next_goal)
         # Creates a new goal with the MoveBaseGoal constructor
         goal = MoveBaseGoal()
         goal.target_pose.header.frame_id = "map"
         goal.target_pose.header.stamp = rospy.Time.now()
 
         # Move 0.5 meters forward along the x axis of the "map" coordinate frame
-        goal.target_pose.pose.position.x = self.next_goal[0]
-        goal.target_pose.pose.position.y = self.next_goal[1]
+        goal.target_pose.pose.position.x = self.next_goal[0] - self.initial_pose[0]
+        goal.target_pose.pose.position.y = self.next_goal[1] - self.initial_pose[1]
         goal.target_pose.pose.position.z = 0.0
+
+        # print("New goal (amcl): {0} {1}".format(goal.target_pose.pose.position.x, goal.target_pose.pose.position.y))
 
         # No rotation of the mobile base frame w.r.t. map frame
         goal.target_pose.pose.orientation.x = 0.0
@@ -116,6 +129,7 @@ class MoveRobotAround:
 if __name__ == '__main__':
     rospy.init_node('movebase_client_py')
 
+    p = Parameters()
     # Make a rowing robot
     rowboat_robot = MoveRobotAround(p)
 
@@ -132,7 +146,7 @@ if __name__ == '__main__':
     # rospy.spin()
 
     iteration = 0
-    total_iterations = 20
+    total_iterations = 10000
 
     # Redo is a flag that, if true, sends the robot back to the previous point because something went wrong
     redo = False
@@ -165,7 +179,7 @@ if __name__ == '__main__':
                 else:
                     redo = False
                     iteration += 1
-                    print("Arrived at:", rowboat_robot.current_position)
+                    print("Arrived at: ", rowboat_robot.current_position)
                     rospy.loginfo("Goal execution done!")
 
             else:

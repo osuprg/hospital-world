@@ -14,7 +14,7 @@ Halls are 'h##'
 
 class HospitalGraph:
     def __init__(self, num_rooms=None, num_halls=None, extra_doors=None,
-                 hall_door_links=None, hall_room_extra=None, connected_halls=None):
+                 hall_door_links=None, hall_room_extra=None, connected_halls=None, connected_rooms=False):
         """
 
         Args:
@@ -35,6 +35,7 @@ class HospitalGraph:
         self.hall_room_links = hall_door_links  # List of which halls and doors are connected
         self.hall_room_extra = hall_room_extra  # List of extra doors (i.e. not door 0) are connected to what halls
         self.connected_halls = connected_halls  # List of which halls are connected together
+        self.connected_rooms = connected_rooms  # Bool to determine if all sequential rooms are connected
         self.draw_nodes()                       # Draw all the nodes
         self.draw_edges()                       # Connect the appropriate nodes
         self.add_weights()                      # Add weights to the edges
@@ -106,10 +107,24 @@ class HospitalGraph:
                 hall_weight = int(h0[-2:]) + int(h1[-2:])
                 self.G.add_edge(h0, h1)
 
+        if self.connected_rooms:
+            for i in range(self.num_rooms):
+                if i != self.num_rooms - 1:
+                    r0 = 'r' + '%02d' % i + '_d00' + 'b'
+                    r1 = 'r' + '%02d' % (i + 1) + '_d00' + 'b'
+                else:
+                    # loop the final door back to the first door
+                    r0 = 'r' + '%02d' % i + '_d00' + 'b'
+                    r1 = 'r' + '%02d' % 0 + '_d00' + 'b'
+                # print(r0, r1)
+                self.G.add_edge(r0, r1)
+
+
     def add_weights(self):
         # Set up to add weights that are a custom interval of [0, 0]
         for (n1, n2) in self.G.edges():
             self.G[n1][n2]['weight'] = cust_interval(0)
+            self.G[n1][n2]['trav_data'] = []
 
     def plot_graph(self):
         # Plot the graph

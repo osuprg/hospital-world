@@ -7,16 +7,16 @@ from geometry_msgs.msg import PoseWithCovarianceStamped
 from hospital_graph_class import HospitalGraph
 from std_msgs.msg import String
 
-from two_rooms_v3_parameters import TwoRoomsParameters
-
+# CHANGE THESE TO POINT TO YOUR PARAMETERS FILE INFO
+from hospital_parameters import HospitalParameters as Parameters
 
 class RobotNodeInfo:
-    def __init__(self, p):
+    def __init__(self, param):
         self.current_pose = None
         self.current_node = None
 
         # Parameters file
-        self.p = p
+        self.p = param
 
         # Prior node is not necessary based on current logic.
         # Leaving here in case I want to change this to only publish when the robot changes nodes.
@@ -31,8 +31,9 @@ class RobotNodeInfo:
 
     def set_current_pose(self, msg):
         # Set the robot's current location and determine what node it is in
-        self.current_pose = (msg.pose.pose.position.x, msg.pose.pose.position.y)
-        self.current_node = self.what_node()
+        self.current_pose = (msg.pose.pose.position.x + self.p.initial_pose[0],
+                                 msg.pose.pose.position.y + self.p.initial_pose[1])
+        self.what_node()
 
         # If the node changed, publish it to a topic
         # if self.prior_node != self.current_node:
@@ -53,28 +54,17 @@ class RobotNodeInfo:
         """
         self.prior_node = self.current_node
 
-        # Loop through once for doors
+        # Update if it has moved to a new node
         for node in self.p.nodes_dict:
-            if 'd' in node:
-                if self.current_pose[0] in self.p.nodes_dict[node][0] and self.current_pose[1] in self.p.nodes_dict[node][1]:
-                    return node
-
-        # Loop through a second time for all other areas
-        for node in self.p.nodes_dict:
-            if 'd' in node:
-                continue
-            else:
-                if self.current_pose[0] in self.p.nodes_dict[node][0] and self.current_pose[1] in self.p.nodes_dict[node][1]:
-                    return node
-
-        raise ValueError('Robot is out of this worlds')
+            if self.current_pose[0] in self.p.nodes_dict[node][0] and self.current_pose[1] in self.p.nodes_dict[node][1]:
+                self.current_node = node
 
 
 if __name__ == "__main__":
     while not rospy.is_shutdown():
         rospy.init_node('node_in_graph_py')
-
-        r = RobotNodeInfo(p=TwoRoomsParameters)
+        p = Parameters()
+        r = RobotNodeInfo(p)
 
         amcl_sub = rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, r.set_current_pose)
 

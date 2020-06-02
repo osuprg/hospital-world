@@ -30,8 +30,8 @@ ex03 x x x x 0 3 0 1
 ex04 x x x x 10 14 5 14
 ex05 x x x x 17 26 5 14
 # Hall nodes not connected to a room / door
-h00 x x x x 5 10 5 5
-h01 x x x x 5 10 14 14
+h00 x x x x 5 10 14 14
+h01 x x x x 14 17 14 14
 h02 x x x x 14 17 5 5
-h03 x x x x 14 17 14 14
+h03 x x x x 5 10 5 5
 # This file cannot have ANY blank lines, including at the end!
