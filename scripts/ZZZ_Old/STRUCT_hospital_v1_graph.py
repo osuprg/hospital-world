@@ -2,6 +2,11 @@ import hospital_graph_class as hosp_graph
 
 
 if __name__ == "__main__":
+
+    """
+    The parameters below are specifically for the first version of the hospital mock-up. 
+    """
+
     # Define number of rooms and halls
     num_rooms = 22
     num_halls = 5

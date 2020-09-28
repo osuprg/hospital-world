@@ -151,6 +151,11 @@ def unpickle_it(filename):
 
 
 if __name__ == "__main__":
+
+    """
+    The 'building' information below is provided as an example for how this should be formatted. 
+    """
+
     # Define number of rooms and halls
     num_rooms = 3
     num_halls = 3

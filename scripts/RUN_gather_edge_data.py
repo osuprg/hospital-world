@@ -2,14 +2,14 @@
 
 import rospy
 
-import hospital_graph_class
 from std_msgs.msg import String
 from time import time
 import atexit
 from datetime import date
 
+import STRUCT_hospital_graph_class as HospGraph
 # CHANGE THESE TO POINT TO YOUR PARAMETERS FILE INFO
-from hospital_parameters import HospitalParameters as Parameters
+from STRUCT_hospital_v1_parameters import HospitalParameters as Parameters
 
 # Yes this is terribly dumb, but you have to write out the full filepath
 # Otherwise it will save to the directory from which you are running the script
@@ -30,7 +30,7 @@ class RobotTiming:
         self.end_time = None
 
         # Set up a NetworkX graph of the building / hospital
-        self.building = hospital_graph_class.HospitalGraph(p.num_rooms, p.num_halls, p.extra_doors,
+        self.building = HospGraph.HospitalGraph(p.num_rooms, p.num_halls, p.extra_doors,
                                       p.hall_door_links, p.extra_door_hall_links, p.connected_halls, p.connected_rooms)
 
     def set_current_node(self, msg):
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     node_sub = rospy.Subscriber('node_in_graph', String, r.set_current_node)
 
     # When the script exits, it will pickle and save the file
-    atexit.register(hospital_graph_class.pickle_it, obj_to_pickle=r.building, file_path_and_name=path_and_name)
+    atexit.register(HospGraph.pickle_it, obj_to_pickle=r.building, file_path_and_name=path_and_name)
 
     rospy.spin()
 

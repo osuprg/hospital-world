@@ -8,7 +8,7 @@ from hospital_graph_class import HospitalGraph
 from std_msgs.msg import String
 
 # CHANGE THESE TO POINT TO YOUR PARAMETERS FILE INFO
-from hospital_parameters import HospitalParameters as Parameters
+from STRUCT_hospital_v1_parameters import HospitalParameters as Parameters
 
 class RobotNodeInfo:
     def __init__(self, param):

@@ -1,5 +1,13 @@
-import interval_cust
-import hospital_graph_class
+import STRUCT_interval_cust as interval_cust
+import STRUCT_hospital_graph_class as hospital_graph_class
+
+"""
+Takes in raw dimensions and parameters from text file. Converts it into a readable dictionary 
+nodes_dict is in the format "node name": [[interval of x range], [interval of y range]]
+Nodes_dict is checked against for transitions between nodes
+Also builds out a dictionary of rooms to be used for choosing the next goal
+"""
+
 
 class HospitalParameters:
     def __init__(self):
@@ -34,7 +42,7 @@ class HospitalParameters:
 
         self.connected_rooms = True
 
-        filename = '/home/toothless/workspaces/research_ws/src/hospital-world/scripts/hospital_parameters_raw.txt'
+        filename = '/hospital-world/scripts/STRUCT_hospital_v1_parameters_raw.txt'
         data = self._read_file(filename)
 
         self._build_nodes_dict(data)

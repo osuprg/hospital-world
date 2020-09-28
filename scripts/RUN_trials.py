@@ -13,7 +13,7 @@ from std_msgs.msg import String
 from random import uniform, choice
 
 # CHANGE THESE TO POINT TO YOUR PARAMETERS FILE INFO
-from hospital_parameters import HospitalParameters as Parameters
+from STRUCT_hospital_v1_parameters import HospitalParameters as Parameters
 
 
 # Name inspired by this artist - http://www.robotsinrowboats.com/
