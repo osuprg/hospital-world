@@ -1,5 +1,5 @@
 import STRUCT_interval_cust as interval_cust
-import STRUCT_hospital_graph_class as hospital_graph_class
+import pickle
 
 """
 Takes in raw dimensions and parameters from text file. Converts it into a readable dictionary 
@@ -42,7 +42,7 @@ class HospitalParameters:
 
         self.connected_rooms = True
 
-        filename = '/hospital-world/scripts/STRUCT_hospital_v1_parameters_raw.txt'
+        filename = '/home/toothless/workspaces/research_ws/src/hospital-world/scripts/STRUCT_hospital_v1_parameters_raw.txt'
         data = self._read_file(filename)
 
         self._build_nodes_dict(data)
@@ -91,7 +91,8 @@ class HospitalParameters:
             self.rooms_dict[node_info[0]] = [interval_cust.Interval(node_info[1], node_info[2]),
                                              interval_cust.Interval(node_info[3], node_info[4])]
             self.nodes_dict[node_info[0]] = [interval_cust.Interval(node_info[1], node_info[2]),
-                                             interval_cust.Interval(node_info[3], node_info[4])]
+                                             interval_cust.Interval(node_info[3], node_info[4]),
+                                             node_info[-1]]  # Adds the human presence condition
 
     def _add_door_nodes(self, node_info):
         # Handle rooms first
@@ -106,7 +107,7 @@ class HospitalParameters:
             name_b = node_info[0] + 'b'
 
         [xmin, xmax] = node_info[5:7]
-        [ymin, ymax] = node_info[7:]
+        [ymin, ymax] = node_info[7:9]
 
         # 'a' is the node in the doorway
         xmin_a = xmin  # 5
@@ -167,18 +168,20 @@ class HospitalParameters:
 
         # Doorway
         self.nodes_dict[name_a] = [interval_cust.Interval(xmin_a, xmax_a),
-                                   interval_cust.Interval(ymin_a, ymax_a)]
+                                   interval_cust.Interval(ymin_a, ymax_a),
+                                   node_info[-1]]  # Adds the human presence condition
 
         # Hallway node outside doorway
         self.nodes_dict[name_b] = [interval_cust.Interval(xmin_b, xmax_b),
-                                   interval_cust.Interval(ymin_b, ymax_b)]
+                                   interval_cust.Interval(ymin_b, ymax_b),
+                                   node_info[-1]]  # Adds the human presence condition
 
         # print(name_a, self.nodes_dict[name_a])
         # print(name_b, self.nodes_dict[name_b])
 
     def _add_hall_nodes(self, node_info):
         [xmin, xmax] = node_info[5:7]
-        [ymin, ymax] = node_info[7:]
+        [ymin, ymax] = node_info[7:9]
 
         # Currently can't handle nodes that are not parallel to an axis
         # Currently nodes are listed as a line with no width
@@ -198,19 +201,40 @@ class HospitalParameters:
             print(node_info[0], xmin, xmax, ymin, ymax)
 
         self.nodes_dict[node_info[0]] = [interval_cust.Interval(xmin, xmax),
-                                         interval_cust.Interval(ymin, ymax)]
+                                         interval_cust.Interval(ymin, ymax),
+                                         node_info[-1]]  # Adds the human presence condition
 
     def _add_excl_nodes(self, node_info):
         self.nodes_dict[node_info[0]] = [interval_cust.Interval(node_info[5], node_info[6]),
-                                         interval_cust.Interval(node_info[7], node_info[8])]
+                                         interval_cust.Interval(node_info[7], node_info[8]),
+                                         node_info[-1]]  # Adds the human presence condition
+
+
+def pickle_it(obj_to_pickle, file_path_and_name):
+    with open(file_path_and_name, 'wb') as f:
+        pickle.dump(obj_to_pickle, f)
+    print("Saving information to file named {}".format(file_path_and_name))
+
+
+def unpickle_it(filename):
+    infile = open(filename, 'rb')
+    unpickled = pickle.load(infile)
+    infile.close()
+    return unpickled
+
 
 if __name__ == '__main__':
-    p = HospitalParameters()
-    building = hospital_graph_class.HospitalGraph(p.num_rooms, p.num_halls, p.extra_doors,
-                                                  p.hall_door_links, p.extra_door_hall_links, p.connected_halls,
-                                                  p.connected_rooms)
+    path_to_param_file = '/home/toothless/workspaces/research_ws/src/hospital-world/scripts/STRUCT_hospital_v1_param_pickle'
+
+    ## Create / update file: ##
+    # p = HospitalParameters()
+    # pickle_it(p, path_to_param_file)
+
+    ## Open file: ##
+    print(unpickle_it(path_to_param_file).nodes_dict)
+
+    ## Create graph structure ##
+    # building = hospital_graph_class.HospitalGraph(p.num_rooms, p.num_halls, p.extra_doors,
+    #                                               p.hall_door_links, p.extra_door_hall_links, p.connected_halls,
+    #                                               p.connected_rooms)
     # building.plot_graph()
-    #
-    # node = 'h00'
-    # print(param.nodes_dict[node][0].low)
-    # print(param.nodes_dict)

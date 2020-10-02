@@ -3,7 +3,7 @@ from networkx.drawing.nx_agraph import graphviz_layout
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
-from interval_cust import Interval as cust_interval
+from STRUCT_interval_cust import Interval as cust_interval
 from os import getcwd
 
 """

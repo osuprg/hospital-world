@@ -4,7 +4,7 @@ import rospy
 
 # Brings in the .action file and messages used by the move base action
 from geometry_msgs.msg import PoseWithCovarianceStamped
-from hospital_graph_class import HospitalGraph
+from STRUCT_hospital_graph_class import HospitalGraph
 from std_msgs.msg import String
 
 # CHANGE THESE TO POINT TO YOUR PARAMETERS FILE INFO
