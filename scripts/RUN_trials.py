@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 
@@ -13,10 +13,10 @@ from std_msgs.msg import String
 from random import uniform, choice
 
 # CHANGE THESE TO POINT TO YOUR PARAMETERS FILE INFO
-from STRUCT_hospital_v1_parameters import HospitalParameters as Parameters
+import STRUCT_hospital_v1_parameters as Parameters
+from STRUCT_hospital_v1_parameters import HospitalParameters
 
 
-# Name inspired by this artist - http://www.robotsinrowboats.com/
 class MoveRobotAround:
     def __init__(self, param):
         self.current_position = None        # Keeps track of robot's current x,y position
@@ -128,8 +128,9 @@ class MoveRobotAround:
 
 if __name__ == '__main__':
     rospy.init_node('movebase_client_py')
+    path_to_param_file = '/home/toothless/workspaces/research_ws/src/hospital-world/scripts/STRUCT_hospital_v1_param_pickle'
+    p = Parameters.unpickle_it(path_to_param_file)
 
-    p = Parameters()
     # Make a rowing robot
     rowboat_robot = MoveRobotAround(p)
 

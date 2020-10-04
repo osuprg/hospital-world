@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 import rospy
 
@@ -75,6 +75,7 @@ class RobotTiming:
         self.building.G[self.current_node][self.prior_node]['trav_data'].append(trav_time)
         print(self.prior_node, self.current_node)
         print("traversal data set", self.building.G[self.current_node][self.prior_node]['trav_data'])
+
 
 if __name__ == "__main__":
     rospy.init_node('gather_edge_data_py')

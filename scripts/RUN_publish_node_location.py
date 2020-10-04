@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 
@@ -8,7 +8,9 @@ from STRUCT_hospital_graph_class import HospitalGraph
 from std_msgs.msg import String
 
 # CHANGE THESE TO POINT TO YOUR PARAMETERS FILE INFO
-from STRUCT_hospital_v1_parameters import HospitalParameters as Parameters
+import STRUCT_hospital_v1_parameters as Parameters
+from STRUCT_hospital_v1_parameters import HospitalParameters
+
 
 class RobotNodeInfo:
     def __init__(self, param):
@@ -63,7 +65,10 @@ class RobotNodeInfo:
 if __name__ == "__main__":
     while not rospy.is_shutdown():
         rospy.init_node('node_in_graph_py')
-        p = Parameters()
+
+        path_to_param_file = '/home/toothless/workspaces/research_ws/src/hospital-world/scripts/STRUCT_hospital_v1_param_pickle'
+        p = Parameters.unpickle_it(path_to_param_file)
+
         r = RobotNodeInfo(p)
 
         amcl_sub = rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, r.set_current_pose)

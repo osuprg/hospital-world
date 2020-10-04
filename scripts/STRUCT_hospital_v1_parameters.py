@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import STRUCT_interval_cust as interval_cust
 import pickle
 
@@ -42,19 +44,14 @@ class HospitalParameters:
 
         self.connected_rooms = True
 
-        filename = '/home/toothless/workspaces/research_ws/src/hospital-world/scripts/STRUCT_hospital_v1_parameters_raw.txt'
-        data = self._read_file(filename)
-
-        self._build_nodes_dict(data)
-
-    def _read_file(self, filename):
+    def read_file(self, filename):
         f = open(filename, 'r')
         data = []
         for line in f:
             data.append(line)
         return data
 
-    def _build_nodes_dict(self, data):
+    def build_nodes_dict(self, data):
 
         for line in data:
             parts = line.split()
@@ -226,12 +223,17 @@ def unpickle_it(filename):
 if __name__ == '__main__':
     path_to_param_file = '/home/toothless/workspaces/research_ws/src/hospital-world/scripts/STRUCT_hospital_v1_param_pickle'
 
-    ## Create / update file: ##
-    # p = HospitalParameters()
-    # pickle_it(p, path_to_param_file)
+    # Create / update file: ##
+    # Set parameters
+    p = HospitalParameters()
+    filename = '/home/toothless/workspaces/research_ws/src/hospital-world/scripts/STRUCT_hospital_v1_parameters_raw.txt'
+    data = p.read_file(filename)
+    p.build_nodes_dict(data)
+    pickle_it(p, path_to_param_file)
 
     ## Open file: ##
-    print(unpickle_it(path_to_param_file).nodes_dict)
+    # param = unpickle_it(path_to_param_file).nodes_dict
+    # print(param)
 
     ## Create graph structure ##
     # building = hospital_graph_class.HospitalGraph(p.num_rooms, p.num_halls, p.extra_doors,

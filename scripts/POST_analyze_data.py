@@ -1,3 +1,6 @@
+#!/usr/bin/env python2
+
+
 import hospital_graph_class as hosp
 import statistics
 import matplotlib.pyplot as plt

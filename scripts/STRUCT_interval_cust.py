@@ -1,4 +1,4 @@
-#!/ust/bin/emv python
+#!/usr/bin/env python2
 
 
 from math import sqrt as mathsqrt

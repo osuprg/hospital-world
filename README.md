@@ -32,27 +32,28 @@ Python packages:
 * Terminal 1 
 ```
 export TURTLEBOT3_MODEL=burger
-roslaunch hospital-world turtlebot_two_rooms.launch
+roslaunch hospital-world turtlebot_hospital.launch
 ```
 * Terminal 2
 ```
-rosrun hospital-world run_trials.py
+rosrun hospital-world RUN_trials.py
 ```
 * Terminal 3 
 ```
-rosrun hospital-world publish_node_location.py 
+rosrun hospital-world RUN_publish_node_location.py 
 ```
 * Terminal 4 
 ```
-rosrun hospital-world gather_edge_data.py
+rosrun hospital-world RUN_gather_edge_data.py
 ```
 
 Still to do:
 - 
 * Make the parameters file integrate with the hospital graph - no reason to store that info in two places
 * Launch all nodes from one launch file
-* Redo the timing logic - nodes are currently large spaces, so 'reaching' the node could be anywhere from one end of the hall to the other - messes up the timing.
 * What to do about rotate recovery? I guess leave it in because it might be a navigation error challenge - what if it oscillates between two nodes really fast?
+
+* ~~Redo the timing logic - nodes are currently large spaces, so 'reaching' the node could be anywhere from one end of the hall to the other - messes up the timing.~~
 * ~~Print interval out to file (pickle the hospital world when exiting)~~
 * ~~Make this into a ros package instead of a bunch of random files~~
 * ~~Clean up move_base file - some of the comments / commented out sections are leftover from an old project~~

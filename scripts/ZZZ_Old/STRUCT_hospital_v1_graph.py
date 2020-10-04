@@ -4,7 +4,7 @@ import hospital_graph_class as hosp_graph
 if __name__ == "__main__":
 
     """
-    The parameters below are specifically for the first version of the hospital mock-up. 
+    The parameters below are specifically for the first version of the hospital_v1 mock-up. 
     """
 
     # Define number of rooms and halls
@@ -30,6 +30,6 @@ if __name__ == "__main__":
 
     hospital = hosp_graph.HospitalGraph(num_rooms, num_halls, extra_doors, hall_door_links, extra_door_hall_links, connected_halls)
     hospital.plot_graph()
-    # hosp_graph.pickle_it(hospital, 'hospital_pickle')
+    # hosp_graph.pickle_it(hospital_v1, 'hospital_pickle')
 
 
