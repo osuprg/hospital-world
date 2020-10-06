@@ -16,8 +16,8 @@ Halls are 'h##'
 """
 
 class HospitalGraph:
-    def __init__(self, num_rooms=None, num_halls=None, extra_doors=None,
-                 hall_door_links=None, hall_room_extra=None, connected_halls=None, connected_rooms=False, filename=None):
+    def __init__(self, num_rooms=None, num_halls=None, extra_doors=None, hall_door_links=None, hall_room_extra=None,
+                 connected_halls=None, connected_rooms=False, filename=None, init_pose=(0, 0)):
         """
 
         Args:
@@ -28,8 +28,9 @@ class HospitalGraph:
             hall_room_extra: List of which additional doors (d01+) connect to which halls in tuple pairs
             connected_halls: List of which halls connect together, e.g. [('h01', 'h02')]
         """
-        self.G = nx.Graph()
+        self.G = nx.Graph(initial_pose=init_pose)
         self.num_rooms = num_rooms              # Integer
+        self.G.graph['num_rooms'] = num_rooms
         self.num_halls = num_halls              # Integer
         self.extra_doors = extra_doors          # List of rooms with extra doors - list a room once for each extra door
         self.rooms = None                       # Contains string representations of all room nodes
@@ -397,9 +398,10 @@ if __name__ == "__main__":
 
     # Set up a NetworkX graph of the building / hospital
     hospital = HospitalGraph(num_rooms, num_halls, extra_doors, hall_door_links, extra_door_hall_links,
-                             connected_halls, connected_rooms, path_to_raw_param)
+                             connected_halls, connected_rooms, path_to_raw_param, initial_pose)
 
-    pickle_it(hospital.G, path_to_pickle)
+    print(hospital.G.nodes['r00']['node_loc'][0])
+    # pickle_it(hospital.G, path_to_pickle)
     # hospital.plot_graph()
 
     # for (n1, n2) in hospital.G.edges():

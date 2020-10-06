@@ -23,6 +23,7 @@ class RobotNodeInfo:
 
         # Parameters file
         self.hosp_graph = hosp_graph
+        self.initial_pose = hosp_graph.graph['initial_pose']
 
         # Publishes the robot's current node to this topic
         self.node_pub = rospy.Publisher('node_in_graph', String, queue_size=10)
@@ -33,7 +34,6 @@ class RobotNodeInfo:
                                  [0.7, 0.9],   # Humans present 70% of the time, speed at 90% normal
                                  [0.2, 0.75]]  # Humans present 20% of the time, speed at 75% normal
 
-        self.initial_pose = (1.0, 2.0)
         # Boolean for whether or not humans are present in the current node
         self.human_status = None
 
@@ -49,6 +49,7 @@ class RobotNodeInfo:
 
     def set_current_pose(self, msg):
         # Set the robot's current location and determine what node it is in
+        # Offsetting with initial pose translates from the world's coordinates to the robot's coordinates
         self.current_pose = (msg.pose.pose.position.x + self.initial_pose[0],
                              msg.pose.pose.position.y + self.initial_pose[1])
         self.what_node()
@@ -78,9 +79,12 @@ class RobotNodeInfo:
         self.prior_node = self.current_node
 
         # Update current node from position
-        for node in self.p.nodes_dict:
-            if self.current_pose[0] in self.p.nodes_dict[node][0] and self.current_pose[1] in self.p.nodes_dict[node][1]:
+        for node in self.hosp_graph.nodes():
+            # Check the current pose against the location of all nodes to see which one it is in currently
+            if self.current_pose[0] in self.hosp_graph.nodes[node]['node_loc'][0] \
+                    and self.current_pose[1] in self.hosp_graph.nodes[node]['node_loc'][1]:
                 self.current_node = node
+
 
     def human_or_no(self):
         dice_roll = random()
@@ -110,16 +114,12 @@ class RobotNodeInfo:
 
 
 if __name__ == "__main__":
+
+    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/STRUCT_hospital_v1_param_pickle'
+    hosp_graph = HospGraph.unpickle_it(path_to_pickle)
+
     while not rospy.is_shutdown():
         rospy.init_node('node_in_graph_py')
-
-        path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/STRUCT_hospital_v1_param_pickle'
-
-        hosp_graph = HospGraph.unpickle_it(path_to_pickle)
-
         r = RobotNodeInfo(hosp_graph)
-
         amcl_sub = rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, r.set_current_pose)
-
         rospy.spin()
-

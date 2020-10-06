@@ -12,32 +12,30 @@ from geometry_msgs.msg import PoseWithCovarianceStamped
 from std_msgs.msg import String
 from random import uniform, choice
 
-# CHANGE THESE TO POINT TO YOUR PARAMETERS FILE INFO
-import STRUCT_hospital_v1_parameters as Parameters
-from STRUCT_hospital_v1_parameters import HospitalParameters
+import STRUCT_hospital_graph_class as HospGraph
 
 
 class MoveRobotAround:
-    def __init__(self, param):
+    def __init__(self, hosp_graph):
         self.current_position = None        # Keeps track of robot's current x,y position
         self.current_node = None            # Keeps track of what node the robot is in
 
         # CHANGE THIS TOO
-        self.initial_pose = param.initial_pose
+        self.initial_pose = hosp_graph.graph['initial_pose']
 
         self.next_goal = (0.0, 0.0)         # Initialize robot's initial location
         self.prior_goal = (0.0, 0.0)        # Initialize robot's prior goal with its starting position
         self.break_goal = (-3.16, 8.22)     # Goal to test the move_base- should be outside the bounds
         self.result_from_path = 3           # Result of a successful path
 
-        self.p = param                      # Parameters of given world
+        self.hosp_graph = hosp_graph        # Parameters of given world
 
         self.rooms = []                     # List of rooms - used to determine next goal
         self._init_rooms_list()             # Initialize list of rooms
 
     def _init_rooms_list(self):
         # Initilaize list of rooms
-        self.rooms = ['r' + '%02d' % i for i in range(self.p.num_rooms)]
+        self.rooms = ['r' + '%02d' % i for i in range(self.hosp_graph.graph['num_rooms'])]
 
     def set_current_pose(self, msg):
         # Get the current position of the robot and store it
@@ -59,15 +57,18 @@ class MoveRobotAround:
 
         while not valid:
             # Uniformly select a random point in the new room - numbers are offset by 0.5 so the goal is not close to a wall
-            self.next_goal = (uniform(self.p.nodes_dict[new_room][0].low + 0.5, self.p.nodes_dict[new_room][0].high - 0.5),
-                              uniform(self.p.nodes_dict[new_room][1].low + 0.5, self.p.nodes_dict[new_room][1].high - 0.5))
+            self.next_goal = (uniform(self.hosp_graph.nodes[new_room]['node_loc'][0].low + 0.5,
+                                      self.hosp_graph.nodes[new_room]['node_loc'][0].high - 0.5),
+                              uniform(self.hosp_graph.nodes[new_room]['node_loc'][1].low + 0.5,
+                                      self.hosp_graph.nodes[new_room]['node_loc'][1].high - 0.5))
 
             # Check that it is not in a convex portion of the room
             # TODO: Change this to check ALL 'excl' portions of the map / find a better way to ignore those portions
-            exclusions = [key for key in self.p.nodes_dict if 'ex' in key]
+            exclusions = [key for key in self.hosp_graph.nodes() if 'ex' in key]
             trigger = False
             for key in exclusions:
-                if self.next_goal[0] in self.p.nodes_dict[key][0] and self.next_goal[1] in self.p.nodes_dict[key][1]:
+                if self.next_goal[0] in self.hosp_graph.nodes[key][0] and \
+                        self.next_goal[1] in self.hosp_graph.nodes[key][1]:
                     trigger = True
 
             if not trigger:
@@ -128,11 +129,12 @@ class MoveRobotAround:
 
 if __name__ == '__main__':
     rospy.init_node('movebase_client_py')
-    path_to_param_file = '/home/toothless/workspaces/research_ws/src/hospital-world/scripts/STRUCT_hospital_v1_param_pickle'
-    p = Parameters.unpickle_it(path_to_param_file)
+
+    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/STRUCT_hospital_v1_param_pickle'
+    hosp_graph = HospGraph.unpickle_it(path_to_pickle)
 
     # Make a rowing robot
-    rowboat_robot = MoveRobotAround(p)
+    rowboat_robot = MoveRobotAround(hosp_graph)
 
     # Subscribe to a bunch of stuff to get a bunch of info.
     amcl_sub = rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, rowboat_robot.set_current_pose)

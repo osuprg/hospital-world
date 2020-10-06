@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
     # TODO: do this more often (every 10 minutes?)
     # When the script exits, it will pickle and save the file
-    atexit.register(HospGraph.pickle_it, obj_to_pickle=r.building, file_path_and_name=path_and_name)
+    atexit.register(HospGraph.pickle_it, obj_to_pickle=r.hosp_graph, file_path_and_name=path_and_name)
 
     rospy.spin()
 
