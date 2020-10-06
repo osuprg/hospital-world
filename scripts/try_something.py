@@ -1,7 +1,7 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
-import rospy
-import STRUCT_interval_cust as cust_int
+import STRUCT_hospital_graph_class as HospGraph
 
-rospy.set_param('try01', 1)
-rospy.set_param('dict', {'a': cust_int.Interval([0, 1]), 'b': cust_int.Interval([2, 3])})
+path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/STRUCT_hospital_v1_param_pickle'
+
+hosp_graph = HospGraph.unpickle_it(path_to_pickle)

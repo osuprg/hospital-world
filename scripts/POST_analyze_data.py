@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 
-import hospital_graph_class as hosp
+import STRUCT_hospital_graph_class as HospGraph
 import statistics
 import matplotlib.pyplot as plt
 
@@ -21,17 +21,17 @@ def plot_it(n1, n2, data_to_plot):
     plt.clf()
 
 if __name__ == "__main__":
-    hospital = hosp.unpickle_it('hospital_interval_2020-06-01')
-    # print(hospital.num_rooms)
-    # print(hospital.G['r10_d00b']['r11_d00b']['weight'])
-    for (n1, n2) in hospital.G.edges():
-        rooms = ['r' + '%02d' % i for i in range(hospital.num_rooms)]
+    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/STRUCT_hospital_v1_param_pickle'
+    hosp_graph = HospGraph.unpickle_it(path_to_pickle)
+
+    for (n1, n2) in hosp_graph.G.edges():
+        rooms = ['r' + '%02d' % i for i in range(hosp_graph.num_rooms)]
         if n1 in rooms or n2 in rooms or 'a' in n1 or 'a' in n2:
             continue
 
         # print('##########')
         # print('Edge between {} and {}'.format(n1, n2))
-        data_to_play = hospital.G[n1][n2]['trav_data']
+        data_to_play = hosp_graph.G[n1][n2]['trav_data']
         if len(data_to_play) > 20:
             plot_it(n1, n2, data_to_play)
 

@@ -46,8 +46,10 @@ class HumansPresent:
 
     def human_or_no(self):
         dice_roll = random()
-        print(dice_roll)
-        print(self.human_conditions[self.condition][0])
+
+        # print(dice_roll)
+        # print(self.human_conditions[self.condition][0])
+
         if dice_roll < self.human_conditions[self.condition][0]:
             self.human_status = True
         else:
@@ -58,10 +60,7 @@ class HumansPresent:
 
     def set_robot_vel(self):
         default_vel = 0.22  # For Turtlebot3
-        if self.human_status:
-            velocity = self.human_conditions[self.condition][1] * default_vel
-        else:
-            velocity = default_vel
+        velocity = self.human_conditions[self.condition][1] * default_vel
 
         new_values = {'max_vel_x': velocity, 'min_vel_x': -velocity}
         self.dynam_client.update_configuration(new_values)
