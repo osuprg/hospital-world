@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import rospy
 
@@ -81,7 +81,7 @@ class RobotTiming:
             self.hosp_graph[self.current_node][self.prior_node]['weight' + self.hum_state].high = trav_time
         # print('new interval: ', self.hosp_graph[self.current_node][self.prior_node]['weight'])
         self.hosp_graph[self.current_node][self.prior_node]['trav_data' + self.hum_state].append(trav_time)
-        print(self.prior_node, self.current_node)
+        print(self.prior_node, self.current_node, self.hum_state)
         print("traversal data set", self.hosp_graph[self.current_node][self.prior_node]['trav_data' + self.hum_state])
 
 

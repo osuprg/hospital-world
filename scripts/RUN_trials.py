@@ -67,8 +67,8 @@ class MoveRobotAround:
             exclusions = [key for key in self.hosp_graph.nodes() if 'ex' in key]
             trigger = False
             for key in exclusions:
-                if self.next_goal[0] in self.hosp_graph.nodes[key][0] and \
-                        self.next_goal[1] in self.hosp_graph.nodes[key][1]:
+                if self.next_goal[0] in self.hosp_graph.nodes[key]['node_loc'][0] and \
+                        self.next_goal[1] in self.hosp_graph.nodes[key]['node_loc'][1]:
                     trigger = True
 
             if not trigger:

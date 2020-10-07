@@ -182,6 +182,9 @@ class HospitalGraph:
             name_a = node_info[0] + 'a'
             name_b = node_info[0] + 'b'
 
+        self.doors.append(name_a)
+        self.doors.append(name_b)
+
         [xmin, xmax] = node_info[5:7]
         [ymin, ymax] = node_info[7:9]
 
@@ -400,12 +403,12 @@ if __name__ == "__main__":
     hospital = HospitalGraph(num_rooms, num_halls, extra_doors, hall_door_links, extra_door_hall_links,
                              connected_halls, connected_rooms, path_to_raw_param, initial_pose)
 
-    print(hospital.G.nodes['r00']['node_loc'][0])
-    # pickle_it(hospital.G, path_to_pickle)
+    # print(hospital.G.nodes['r00']['node_loc'][0])
+    pickle_it(hospital.G, path_to_pickle)
     # hospital.plot_graph()
 
     # for (n1, n2) in hospital.G.edges():
-    #     print(n1, n2, hospital.G[n1][n2])
+    #     print(n1, n2)  #, hospital.G[n1][n2])
     #
     # for n in hospital.G.nodes():
     #     print(n, hospital.G.nodes[n])
