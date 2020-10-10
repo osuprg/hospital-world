@@ -42,7 +42,7 @@ class HospitalGraph:
         self.connected_rooms = connected_rooms  # Bool to determine if all sequential rooms are connected
 
         self.hall_width = 2.0
-        self.node_width = 0.5
+        self.node_width = 0.6
         self.hall_node_width = 1.0
 
         self.filename = filename
@@ -77,7 +77,7 @@ class HospitalGraph:
 
             if node_info[0][0] == 'r':
                 self._add_room_loc(node_info)
-                self._add_door_loc(node_info)
+                self._add_door_loc_sans_a(node_info)
 
             elif node_info[0][0] == 'h':
                 self._add_hall_loc(node_info)
@@ -99,43 +99,49 @@ class HospitalGraph:
             for r in range(self.num_rooms):
                 room = 'r' + '%02d' % r
                 # weight = r
-                if room in door and 'a' in door:
+                if room in door:  #  and 'a' in door
                     self.G.add_edge(room, door)
-
+                    # print("edge:", room, door)
             # Add edges between interior ('a') and exterior ('b') doors
-            for door_b in self.doors:
-                if door_b[:-1] in door and door_b is not door:
-                    if not self.G.has_edge(door, door_b):
-                        self.G.add_edge(door, door_b)
+            # for door_b in self.doors:
+            #     if door_b[:-1] in door and door_b is not door:
+            #         if not self.G.has_edge(door, door_b):
+            #             self.G.add_edge(door, door_b)
 
         # Add edges between halls and door 0 of adjacent rooms
         for num in range(self.num_halls):  # Loop through list of hall links
             hall_str = 'h' + '%02d' % num  # Get the string for the specific hallway
             for rm_num in self.hall_room_links[num]:
-                door_to_add = 'r' + '%02d' % rm_num + '_d00' + 'b'
+                door_to_add = 'r' + '%02d' % rm_num + '_d00'
                 self.G.add_edge(hall_str, door_to_add)
+                # print("edge: ", hall_str, door_to_add)
 
         # Add edges for additional doors
         if self.hall_room_extra:
             self.G.add_edges_from(self.hall_room_extra)
+            # print("edges: ", self.hall_room_extra)
 
         # Add edges between connected hallways
         if self.connected_halls:
             for (h0, h1) in self.connected_halls:
                 hall_weight = int(h0[-2:]) + int(h1[-2:])
                 self.G.add_edge(h0, h1)
+                # print('edge: ', h0, h1)
 
         if self.connected_rooms:
             for i in range(self.num_rooms):
-                if i != self.num_rooms - 1 and i != 1:
-                    r0 = 'r' + '%02d' % i + '_d00' + 'b'
-                    r1 = 'r' + '%02d' % (i + 1) + '_d00' + 'b'
+                if i == 1:
+                    continue
+                if i != self.num_rooms - 1:
+                    r0 = 'r' + '%02d' % i + '_d00'
+                    r1 = 'r' + '%02d' % (i + 1) + '_d00'
                 else:
                     # loop the final door back to the first door
-                    r0 = 'r' + '%02d' % i + '_d00' + 'b'
-                    r1 = 'r' + '%02d' % 0 + '_d00' + 'b'
+                    r0 = 'r' + '%02d' % i + '_d00'
+                    r1 = 'r' + '%02d' % 0 + '_d00'
                 # print(r0, r1)
                 self.G.add_edge(r0, r1)
+                # print("edge: ", r0, r1)
 
     def _add_edge_weights(self):
         # Set up to add weights that are a custom interval of [0, 0]
@@ -170,7 +176,65 @@ class HospitalGraph:
                                       cust_interval(node_info[3], node_info[4])],
                             hum_cond=node_info[-1])  # Adds the human presence condition
 
-    def _add_door_loc(self, node_info):
+    def _add_door_loc_sans_a(self, node_info):
+        # Handle rooms first
+        # Rooms will get one node in the door and one spanning the hall
+
+        # Handles rooms then extra doors
+        name = node_info[0]
+
+        if 'd' not in node_info[0]:
+            name = node_info[0] + '_d00'
+
+        self.doors.append(name)
+
+        [xmin, xmax] = node_info[5:7]
+        [ymin, ymax] = node_info[7:9]
+
+        # Currently can't handle doors that are not parallel to an axis
+        # Currently a door is listed as a line with no width
+        # This adds width of 0.4m so it can detect when it's in that space
+        # Vertical
+        if xmin == xmax:
+
+            # This is where things get very hand-coded (ugh)
+            # TODO: Make this less world specific
+            # Spans the hallway but doesn't overlap with the door node
+            if xmin < 15:
+                xmax = xmin + self.hall_width
+            else:
+                xmin = xmax - self.hall_width
+
+            middle_y = (ymin + ymax) / 2
+            ymin = middle_y - self.hall_node_width / 2
+            ymax = middle_y + self.hall_node_width / 2
+
+        # Horizontal
+        elif ymin == ymax:
+
+            # This is where things get very hand-coded (ugh)
+            # TODO: Make this less world specific
+            # Spans the hallway but doesn't overlap with the door node
+            if ymin < 10:
+                ymax = ymin + self.hall_width
+            else:
+                ymin = ymax - self.hall_width
+
+            middle_x = (xmin + xmax) / 2
+            xmin = middle_x - self.hall_node_width / 2
+            xmax = middle_x + self.hall_node_width / 2
+
+        else:
+            print("something has gone wrong. One of these pairs should be ==")
+            print(xmin, xmax, ymin, ymax)
+
+        # Hallway node outside doorway
+        self.G.add_node(name,
+                        node_loc=[cust_interval(xmin, xmax),
+                                  cust_interval(ymin, ymax)],
+                        hum_cond=node_info[-1])  # Adds the human presence condition
+
+    def _add_door_loc_with_a(self, node_info):
         # Handle rooms first
         # Rooms will get one node in the door and one spanning the hall
 
@@ -381,9 +445,9 @@ if __name__ == "__main__":
     hall_node_width = 1.0
 
     extra_doors = ['r01']
-    extra_door_hall_links = [('r01_d01b', 'h00'), ('r01_d01b', 'h01'), ('r01_d01b', 'r02_d00b'),
-                                  ('r01_d01b', 'r01_d00b'), ('r03_d00b', 'r05_d00b'), ('r07_d00b', 'r09_d00b'),
-                                  ('r15_d00b', 'r17_d00b')]
+    extra_door_hall_links = [('r01_d01', 'h00'), ('r01_d01', 'h01'), ('r01_d01', 'r02_d00'),
+                             ('r01_d01', 'r01_d00'), ('r03_d00', 'r05_d00'), ('r07_d00', 'r09_d00'),
+                             ('r15_d00', 'r17_d00')]
 
     # Associates rooms (door 0) with the adjacent hall - additional doors handled further down
     hall0_rooms = [0, 1]
@@ -402,9 +466,11 @@ if __name__ == "__main__":
     # Set up a NetworkX graph of the building / hospital
     hospital = HospitalGraph(num_rooms, num_halls, extra_doors, hall_door_links, extra_door_hall_links,
                              connected_halls, connected_rooms, path_to_raw_param, initial_pose)
-
-    # print(hospital.G.nodes['r00']['node_loc'][0])
     pickle_it(hospital.G, path_to_pickle)
+
+    # print(hospital.G.nodes())
+    # print([n for n in hospital.G.neighbors('r00_d00b')])
+    # print(hospital.G.nodes['r00']['node_loc'][0])
     # hospital.plot_graph()
 
     # for (n1, n2) in hospital.G.edges():

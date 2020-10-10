@@ -8,6 +8,8 @@ import dynamic_reconfigure.client as dynam
 from std_msgs.msg import Bool, Float64, String
 import atexit
 from random import random
+from nav_msgs.msg import Path
+from queue import Queue
 
 # CHANGE THESE TO POINT TO YOUR PARAMETERS FILE INFO
 import STRUCT_hospital_graph_class as HospGraph
@@ -18,8 +20,10 @@ class RobotNodeInfo:
         self.current_pose = None
 
         # Keeps track of current and prior node to check when it changes
-        self.current_node = None
-        self.prior_node = None
+        self.current_node_msg = None
+        self.prior_node_msg = None
+        self.current_node_q = None
+        self.next_node_q = None
 
         # Parameters file
         self.hosp_graph = hosp_graph
@@ -47,44 +51,88 @@ class RobotNodeInfo:
         # This is the magic sauce that allows us to change the max velocity on the fly
         self.dynam_client = dynam.Client('move_base/DWAPlannerROS')
 
+        self.poses = None
+        self.plan = None
+        self.plan_q = Queue()
+        self.prior_plan = None
+
+    def get_plan(self, msg):
+        if self.plan:
+            self.prior_plan = self.plan.copy()
+        self.plan = []
+        prior_node = None
+
+        for ind_pose in msg.poses:
+            point = (ind_pose.pose.position.x + self.initial_pose[0], ind_pose.pose.position.y + self.initial_pose[1])
+            node = self.what_node(point)
+            if node and node != prior_node:
+                self.plan.append(node)
+                self.plan_q.put(node)
+            prior_node = node
+
+        for i in range(len(self.plan) - 1):
+            # print(self.plan[i])
+            # print([x for x in self.hosp_graph.neighbors(self.plan[i+1])])
+            if not self.plan[i] in self.hosp_graph.neighbors(self.plan[i+1]):
+                print("{} and {} are not connected".format(self.plan[i], self.plan[i+1]))
+
+        try:
+            if self.plan != [x for x in self.plan if x in self.prior_plan]:
+                self.current_node_q = self.plan_q.get()
+                self.next_node_q = self.plan_q.get()
+                print(self.plan)
+                print('###########################')
+        except TypeError:
+            self.current_node_q = self.plan_q.get()
+            self.next_node_q = self.plan_q.get()
+            print(self.plan)
+            print('###########################')
+
+    def what_node(self, point):
+
+        # Update current node from position
+        for node in self.hosp_graph.nodes():
+            # Check the current pose against the location of all nodes to see which one it is in currently
+            if point[0] in self.hosp_graph.nodes[node]['node_loc'][0] \
+                    and point[1] in self.hosp_graph.nodes[node]['node_loc'][1]:
+                return node
+        return None
+
     def set_current_pose(self, msg):
         # Set the robot's current location and determine what node it is in
         # Offsetting with initial pose translates from the world's coordinates to the robot's coordinates
         self.current_pose = (msg.pose.pose.position.x + self.initial_pose[0],
                              msg.pose.pose.position.y + self.initial_pose[1])
-        self.what_node()
 
-        # Publish node info
-        rospy.loginfo(self.current_node)
-        self.node_pub.publish(self.current_node)
+        self.prior_node_msg = self.current_node_msg
+
+        current_node = self.what_node(self.current_pose)
+
+        if current_node:
+            self.current_node_msg = current_node
+
+        # # Publish node info
+        # rospy.loginfo(self.current_node_msg)
+        # self.node_pub.publish(self.current_node_msg)
 
         # If the robot has moved to a new node, check whether humans are present then set new velocity
-        if self.prior_node != self.current_node:
-            # TODO: Change this to be based on edge, not node
-            self.condition = int(self.hosp_graph.nodes[self.current_node]['hum_cond'])
-            self.human_or_no()
-            self.set_robot_vel()
+        if self.prior_node_msg != self.current_node_msg:
 
-    def what_node(self):
-        """
-       Door nodes are checked first - they are within the bounds of rooms / halls so doors must supersede other areas
+            self.current_node_q = self.next_node_q
+            self.next_node_q = self.plan_q.get()
 
-        Args:
-            p: parameters
-            loc: current x, y location to check
+            print(self.current_node_msg, self.current_node_q)
+            curr_node_info = str(self.current_node_msg + ", " + self.current_node_q)
+            # Publish node info
+            rospy.loginfo(curr_node_info)
+            self.node_pub.publish(curr_node_info)
 
-        Updates self.prior_node and self.current_node
+            if self.current_node_q != self.current_node_msg:
+                print("something has gone terribly wrong")
 
-        """
-        self.prior_node = self.current_node
-
-        # Update current node from position
-        for node in self.hosp_graph.nodes():
-            # Check the current pose against the location of all nodes to see which one it is in currently
-            if self.current_pose[0] in self.hosp_graph.nodes[node]['node_loc'][0] \
-                    and self.current_pose[1] in self.hosp_graph.nodes[node]['node_loc'][1]:
-                self.current_node = node
-
+            # self.condition = int(self.hosp_graph[self.current_node_q][self.next_node_q]['hum_cond'])
+            # self.human_or_no()
+            # self.set_robot_vel()
 
     def human_or_no(self):
         dice_roll = random()
@@ -121,5 +169,8 @@ if __name__ == "__main__":
     while not rospy.is_shutdown():
         rospy.init_node('node_in_graph_py')
         r = RobotNodeInfo(hosp_graph)
+        # TODO: The logic here is fucked. It's not updating the plan queue once it gets the initial plan.
+        #  Also the timing between getting the initial plan and figuring out where I am is off.
+        plan_sub = rospy.Subscriber('move_base/NavfnROS/plan', Path, r.get_plan)
         amcl_sub = rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, r.set_current_pose)
         rospy.spin()

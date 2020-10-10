@@ -32,6 +32,7 @@ class MoveRobotAround:
 
         self.rooms = []                     # List of rooms - used to determine next goal
         self._init_rooms_list()             # Initialize list of rooms
+        self.new_plan_pub = rospy.Publisher('new_plan_pub', String, queue_size=10)
 
     def _init_rooms_list(self):
         # Initilaize list of rooms
@@ -114,6 +115,9 @@ class MoveRobotAround:
 
         # Sends the goal to the action server.
         client.send_goal(goal)
+
+        for i in range(10):
+            self.new_plan_pub.publish('yes')
 
         # Waits for the server to finish performing the action.
         wait = client.wait_for_result()
