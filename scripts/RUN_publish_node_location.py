@@ -9,7 +9,7 @@ from std_msgs.msg import Bool, Float64, String
 import atexit
 from random import random
 from nav_msgs.msg import Path
-from queue import Queue
+from queue import Queue, Empty
 
 # CHANGE THESE TO POINT TO YOUR PARAMETERS FILE INFO
 import STRUCT_hospital_graph_class as HospGraph
@@ -22,8 +22,10 @@ class RobotNodeInfo:
         # Keeps track of current and prior node to check when it changes
         self.current_node_msg = None
         self.prior_node_msg = None
+
         self.current_node_q = None
         self.next_node_q = None
+        self.current_node_index = 0
 
         # Parameters file
         self.hosp_graph = hosp_graph
@@ -53,38 +55,53 @@ class RobotNodeInfo:
 
         self.poses = None
         self.plan = None
-        self.plan_q = Queue()
         self.prior_plan = None
 
     def get_plan(self, msg):
+        # Keep the prior plan for comparison
         if self.plan:
             self.prior_plan = self.plan.copy()
-        self.plan = []
+
+        # Re-initialize plan and prior node
+        plan = []
         prior_node = None
 
         for ind_pose in msg.poses:
             point = (ind_pose.pose.position.x + self.initial_pose[0], ind_pose.pose.position.y + self.initial_pose[1])
             node = self.what_node(point)
             if node and node != prior_node:
-                self.plan.append(node)
-                self.plan_q.put(node)
+                plan.append(node)
             prior_node = node
 
-        for i in range(len(self.plan) - 1):
+        # Check to make sure the full path is connected
+        for i in range(len(plan) - 1):
             # print(self.plan[i])
             # print([x for x in self.hosp_graph.neighbors(self.plan[i+1])])
-            if not self.plan[i] in self.hosp_graph.neighbors(self.plan[i+1]):
-                print("{} and {} are not connected".format(self.plan[i], self.plan[i+1]))
+            if not plan[i] in self.hosp_graph.neighbors(plan[i+1]):
+                print("{} and {} are not connected".format(plan[i], plan[i+1]))
 
         try:
-            if self.plan != [x for x in self.plan if x in self.prior_plan]:
-                self.current_node_q = self.plan_q.get()
-                self.next_node_q = self.plan_q.get()
+            # Turn plans into strings to compare
+            # This checks to see if it's just the plan updating as it moves along and eliminates earlier actions
+            # or if it is actually a brand new plan
+            plan_str = str(plan).strip('[]')
+            prior_plan_str = str(self.prior_plan).strip('[]')
+
+            if plan_str not in prior_plan_str:
+                self.plan = plan.copy()
+                self.current_node_index = 0
+                self.current_node_q = self.plan[self.current_node_index]
+                self.next_node_q = self.plan[self.current_node_index + 1]
+                print('###########################')
                 print(self.plan)
                 print('###########################')
+
+        # Catches the error from the first iteration where there is no prior plan
+        # Yes, this is lazy. But I tried it a different way and it was way messier.
         except TypeError:
-            self.current_node_q = self.plan_q.get()
-            self.next_node_q = self.plan_q.get()
+            self.current_node_q = self.plan[self.current_node_index]
+            self.next_node_q = self.plan[self.current_node_index + 1]
+            print('###########################')
             print(self.plan)
             print('###########################')
 
@@ -96,6 +113,14 @@ class RobotNodeInfo:
             if point[0] in self.hosp_graph.nodes[node]['node_loc'][0] \
                     and point[1] in self.hosp_graph.nodes[node]['node_loc'][1]:
                 return node
+        return None
+
+    def find_in_list(self):
+        for i in range(len(self.plan)):
+            if self.plan[i] == self.current_node_msg:
+                print(self.plan[i], self.current_node_msg)
+                return i
+
         return None
 
     def set_current_pose(self, msg):
@@ -111,28 +136,31 @@ class RobotNodeInfo:
         if current_node:
             self.current_node_msg = current_node
 
-        # # Publish node info
-        # rospy.loginfo(self.current_node_msg)
-        # self.node_pub.publish(self.current_node_msg)
-
-        # If the robot has moved to a new node, check whether humans are present then set new velocity
         if self.prior_node_msg != self.current_node_msg:
+            self.current_node_index += 1
+            self.current_node_q = self.plan[self.current_node_index]
+            try:
+                self.next_node_q = self.plan[self.current_node_index + 1]
+            except IndexError:
+                # End of the list
+                self.next_node_q = None
+            print('-----------------')
+            print("queue current and next", self.current_node_q, self.next_node_q)
+            print('msg current', self.current_node_msg)
 
-            self.current_node_q = self.next_node_q
-            self.next_node_q = self.plan_q.get()
+            if self.current_node_msg != self.current_node_q:
+                print("Current node message and queue are not the same")
+                index = self.find_in_list()
+                print('index of current node in list', index)
+                if index is not None:
+                    self.current_node_q = self.plan[index]
+                    try:
+                        self.next_node_q = self.plan[index + 1]
+                        self.current_node_index = index
+                    except IndexError:
+                        self.next_node_q = None
+                    print('fixed q to match msg', self.current_node_msg, self.current_node_q)
 
-            print(self.current_node_msg, self.current_node_q)
-            curr_node_info = str(self.current_node_msg + ", " + self.current_node_q)
-            # Publish node info
-            rospy.loginfo(curr_node_info)
-            self.node_pub.publish(curr_node_info)
-
-            if self.current_node_q != self.current_node_msg:
-                print("something has gone terribly wrong")
-
-            # self.condition = int(self.hosp_graph[self.current_node_q][self.next_node_q]['hum_cond'])
-            # self.human_or_no()
-            # self.set_robot_vel()
 
     def human_or_no(self):
         dice_roll = random()
