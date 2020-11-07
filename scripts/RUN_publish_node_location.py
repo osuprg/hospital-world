@@ -32,12 +32,13 @@ class RobotNodeInfo:
         self.initial_pose = hosp_graph.graph['initial_pose']
 
         # Publishes the robot's current node to this topic
-        self.node_pub = rospy.Publisher('node_in_graph', String, queue_size=10)
+        self.node_pub = rospy.Publisher('node_in_graph', String, queue_size=1)
+        # self.human_status_pub = rospy.Publisher('human_status', String, queue_size=1)
 
         # Which condition is the node / hall under
         self.condition = None
-        self.human_conditions = [[0.0, 1.0],   # Humans present 0% of the time; speed at 100% normal
-                                 [0.7, 0.9],   # Humans present 70% of the time, speed at 90% normal
+        self.human_conditions = [[0.0, 1.0],  # Humans present 0% of the time; speed at 100% normal
+                                 [0.7, 0.9],  # Humans present 70% of the time, speed at 90% normal
                                  [0.2, 0.75]]  # Humans present 20% of the time, speed at 75% normal
 
         # Boolean for whether or not humans are present in the current node
@@ -74,11 +75,11 @@ class RobotNodeInfo:
             prior_node = node
 
         # Check to make sure the full path is connected
-        for i in range(len(plan) - 1):
-            # print(self.plan[i])
-            # print([x for x in self.hosp_graph.neighbors(self.plan[i+1])])
-            if not plan[i] in self.hosp_graph.neighbors(plan[i+1]):
-                print("{} and {} are not connected".format(plan[i], plan[i+1]))
+        # for i in range(len(plan) - 1):
+        #     # print(self.plan[i])
+        #     # print([x for x in self.hosp_graph.neighbors(self.plan[i+1])])
+        #     if not plan[i] in self.hosp_graph.neighbors(plan[i+1]):
+        #         print("{} and {} are not connected".format(plan[i], plan[i+1]))
 
         try:
             # Turn plans into strings to compare
@@ -136,22 +137,25 @@ class RobotNodeInfo:
         if current_node:
             self.current_node_msg = current_node
 
+        # If we have reached a new node
         if self.prior_node_msg != self.current_node_msg:
+
+            # Update current node
             self.current_node_index += 1
             self.current_node_q = self.plan[self.current_node_index]
+
+            # Update next node, unless it's the end of the list
             try:
                 self.next_node_q = self.plan[self.current_node_index + 1]
             except IndexError:
                 # End of the list
                 self.next_node_q = None
-            print('-----------------')
-            print("queue current and next", self.current_node_q, self.next_node_q)
-            print('msg current', self.current_node_msg)
 
+            # If the message and current node in the list are not the same, correct it
             if self.current_node_msg != self.current_node_q:
                 print("Current node message and queue are not the same")
                 index = self.find_in_list()
-                print('index of current node in list', index)
+                # print('index of current node in list', index)
                 if index is not None:
                     self.current_node_q = self.plan[index]
                     try:
@@ -160,9 +164,33 @@ class RobotNodeInfo:
                     except IndexError:
                         self.next_node_q = None
                     print('fixed q to match msg', self.current_node_msg, self.current_node_q)
+                else:
+                    rospy.loginfo("Current node is not in the plan")
+                    self.current_node_q = None
+
+            # If there is something to record
+            if self.current_node_q and self.next_node_q:
+                # Check to make sure there is an edge between them
+                if not self.current_node_q in self.hosp_graph.neighbors(self.next_node_q):
+                    print("{} and {} are not connected".format(self.current_node_q, self.next_node_q))
+                    rospy.loginfo("{} and {} are not connected".format(str(self.current_node_q), str(self.next_node_q)))
+                    self.node_pub.publish("Do not record")
+                # If there is, then find the human condition, set the velocity, and publish the node info
+                else:
+                    self.human_or_no()
+                    self.set_robot_vel()
+                    rospy.loginfo(str(self.current_node_q) + ", " + str(self.next_node_q) + ", " + self.human_status)
+                    self.node_pub.publish(
+                        str(self.current_node_q) + ", " + str(self.next_node_q) + ", " + self.human_status)
+            else:
+                rospy.loginfo('No current or next node')
+                self.node_pub.publish('Do not record')
+
 
 
     def human_or_no(self):
+        self.condition = int(self.hosp_graph[self.current_node_q][self.next_node_q]['hum_cond'])
+        print(self.condition)
         dice_roll = random()
 
         # print(dice_roll)
@@ -172,9 +200,6 @@ class RobotNodeInfo:
             self.human_status = "_hum"
         else:
             self.human_status = "_no"
-
-        rospy.loginfo(self.human_status)
-        self.node_pub.publish(self.human_status)
 
     def set_robot_vel(self):
         if self.human_status == "_hum":
@@ -197,8 +222,7 @@ if __name__ == "__main__":
     while not rospy.is_shutdown():
         rospy.init_node('node_in_graph_py')
         r = RobotNodeInfo(hosp_graph)
-        # TODO: The logic here is fucked. It's not updating the plan queue once it gets the initial plan.
-        #  Also the timing between getting the initial plan and figuring out where I am is off.
+
         plan_sub = rospy.Subscriber('move_base/NavfnROS/plan', Path, r.get_plan)
         amcl_sub = rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, r.set_current_pose)
         rospy.spin()

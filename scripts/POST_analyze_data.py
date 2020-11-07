@@ -31,7 +31,7 @@ def plot_mult(n1, n2, data_no, data_hum):
     plt.clf()
 
 if __name__ == "__main__":
-    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_2020-10-06'
+    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_2020-10-23'
     hosp_graph = HospGraph.unpickle_it(path_to_pickle)
 
     for (n1, n2) in hosp_graph.edges():
