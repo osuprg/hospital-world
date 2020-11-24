@@ -215,12 +215,12 @@ class RobotNodeInfo:
 
 
 if __name__ == "__main__":
+    rospy.init_node('node_in_graph_py')
 
-    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/STRUCT_hospital_v1_param_pickle'
+    path_to_pickle = rospy.get_param('graph_file_path')
     hosp_graph = HospGraph.unpickle_it(path_to_pickle)
 
     while not rospy.is_shutdown():
-        rospy.init_node('node_in_graph_py')
         r = RobotNodeInfo(hosp_graph)
 
         plan_sub = rospy.Subscriber('move_base/NavfnROS/plan', Path, r.get_plan)

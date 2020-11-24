@@ -64,7 +64,7 @@ class CurrentPath:
 if __name__ == "__main__":
     rospy.init_node('try_it_py')
 
-    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/STRUCT_hospital_v1_param_pickle'
+    path_to_pickle = rospy.get_param('graph_file_path')
 
     hosp_graph = HospGraph.unpickle_it(path_to_pickle)
     path = CurrentPath(hosp_graph)
