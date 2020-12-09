@@ -1,4 +1,6 @@
-# hospital_world
+# Task-dependent contextual planning 
+
+[**Github link**](https://github.com/osuprg/hospital-world)
 
 ## Basics:
 
@@ -18,7 +20,9 @@ These are separate stages because we want to wait to collect data until after th
 * **STAGE 2**: Run custom global planner on robot using LTL data
 
 
-## Dependencies:
+## How to make it work:
+
+### Dependencies:
 
 #### ROS Packages:
 * Turtlebot3-*
@@ -28,7 +32,9 @@ These are separate stages because we want to wait to collect data until after th
 #### Python packages:
 * Networkx
 
-## STAGE 1: Collect LTL data
+### STAGE 1: Collect LTL data
+
+Make sure you're pointing to the right 
 
 #### Terminal 1 
 ```
@@ -52,7 +58,9 @@ rosrun hospital-world RUN_gather_edge_data.py
 ```
 
 
-## STAGE 2: Use LTL data in global planner
+### STAGE 2: Use LTL data in global planner
+
+Change the file parameter to point to the correct LTL data file
 
 #### Terminal 1 
 ```
@@ -77,11 +85,17 @@ rosrun hospital-world RUN_publish_node_location.py
 
 ### Structural elements
 File names start with "STRUCT_"
-* **hospital_graph_class.py** - creates a NetworkX graph of the hospital, including nodes and edges.
-* **hospital_graph.py** - example of how to use hospital_graph_class.py - matches the Hospital_world_graph_sketch.jpg (with minor edits)
-* **interval_cust.py** - Custom interval class. Used to store data about edges in the graph. 
-* **hospital_v1_parameters_raw.txt** - parameters file that outlines the general structure and x,y locations of each node / edge
-* **plot_nodes.py** - a good check for setting up a new world. 
+* **hospital_v1_parameters_raw.txt** - 
+  parameters file that outlines the general structure and x,y locations of each node / edge
+* **hospital_graph_class.py** - 
+  creates a NetworkX graph of the hospital, including nodes and edges. 
+  Created from hospital parameters file
+* **hospital_graph.py** - 
+  example of how to use hospital_graph_class.py - matches the Hospital_world_graph_sketch.jpg (with minor edits)
+* **interval_cust.py** - 
+  Custom interval class. Used to store data about edges in the graph. 
+* **plot_nodes.py** - 
+  a good check for setting up a new world. 
   Allows you to plot the NetworkX graph in 2D space to ensure everything is located and linked correctly.
 
 ### Run trials
@@ -96,7 +110,7 @@ File names start with "RUN_"
   subscribes to topic outputting the robot's current node - times how long it takes to switch nodes, updates the 'weight' interval (in hospital class). 
   Pickles and saves file every 5 minutes and on exit. Make sure to check / change the file path where you want it to save - specified just after imports.
 
-### Analyze data
+### Analyze data (Science!)
 File names start with "POST_"
 * **add_stats_to_edges.py** - this takes the data collected then runs basic statistics and saves for each edge (e.g. mean and variance of each distribution)
 * **analyze_data.py** - plots the distribution of times collected on each edge
@@ -104,15 +118,30 @@ File names start with "POST_"
 
 ## Still to do:
 
-Structural:
-* 
+#### Structural:
+
 * Write launch files (because 5 terminal launch sequence is ridiculous)
     * Gather 'long-term learning' data
     * Run custom global planner using LTL data
     * Run custom global planner vs dijkstra and collect data
-
-* Make the parameters file integrate with the hospital graph - no reason to store that info in two places
+* Update room nodes to be the centroid of the room. 
+  Currently the node spans the entire room, which causes timing issues
+* Change to use sim, not real, time.
+  Speed up sim time.
 * What to do about rotate recovery? I guess leave it in because it might be a navigation error challenge - what if it oscillates between two nodes really fast?
+* Clean up file path stuff (both for files being read in and written to) - can be done through parameters in launch files
+
+#### Running:
+
+* Write a new node to take in the custom global plan and send it to move_base one node at a time (action server)
+
+#### Science!:
+
+* Write new node to collect more robust data to compare new and old graph planners
+* Figure out how to run baseline. Options are:
+    * Run with out of the box move_base and alter run_trials file to collect additional data (e.g. time over whole path)
+    * Run with custom global planner and use dijkstra or A* with Euclidean distance (close enough?) as a weight
+
 
 
 Done: 
