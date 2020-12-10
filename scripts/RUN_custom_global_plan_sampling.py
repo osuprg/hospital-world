@@ -13,6 +13,7 @@ from statistics import mean, stdev, StatisticsError
 # Custom things
 # CHANGE THESE TO POINT TO YOUR PARAMETERS FILE INFO
 import STRUCT_hospital_graph_class as HospGraph
+from std_msgs.msg import String
 
 
 class SamplingPlannerClass:
@@ -21,25 +22,26 @@ class SamplingPlannerClass:
         self.hosp_graph = hosp_graph
         self.current_key = 0
 
-    def get_path(self, samples):
+
+    def get_path(self, samples, n1, n2):
         for _ in range(samples):
-            self.run_samples()
+            self.run_samples(n1, n2)
 
         key = self.analyze_results()
-        return self.paths_dict[key][0]
+        new_path = self.paths_dict[key][0]
+        return new_path
 
-    def run_samples(self):
-        pct_hum = nx.get_edge_attributes(hosp_graph, 'pct_hum')
-        means_hum = nx.get_edge_attributes(hosp_graph, 'mean_hum')
-        std_hum = nx.get_edge_attributes(hosp_graph, 'std_hum')
-        means_no = nx.get_edge_attributes(hosp_graph, 'mean_no')
-        std_no = nx.get_edge_attributes(hosp_graph, 'std_no')
+    def run_samples(self, curr_node, goal_node):
+        pct_hum = nx.get_edge_attributes(self.hosp_graph, 'pct_hum')
+        means_hum = nx.get_edge_attributes(self.hosp_graph, 'mean_hum')
+        std_hum = nx.get_edge_attributes(self.hosp_graph, 'std_hum')
+        means_no = nx.get_edge_attributes(self.hosp_graph, 'mean_no')
+        std_no = nx.get_edge_attributes(self.hosp_graph, 'std_no')
 
         start = time()
 
-        # TODO: Once done testing, put this in a loop to run a lot of samples
         # Each time we run a sample, we're going to
-        for (n1, n2) in hosp_graph.edges():
+        for (n1, n2) in self.hosp_graph.edges():
             # Decide whether or not there will be a human on the edge, then get timing
             human_on_edge = False
             percent_on_edge = pct_hum[n1, n2]
@@ -56,15 +58,15 @@ class SamplingPlannerClass:
                 if edge_cost <= 0:
                     edge_cost = 0.1
 
-                hosp_graph[n1][n2]['temp_edge_cost'] = edge_cost
+                self.hosp_graph[n1][n2]['temp_edge_cost'] = edge_cost
                 # print(n1, n2, '{:0.3f}'.format(edge_cost))
 
             except (TypeError, KeyError) as e:
                 # print('Key error for edge [{}, {}]. Human condition {}'.format(n1, n2, human_on_edge))
                 # There is no data for this edge, so we will set the cost to a very high value
-                hosp_graph[n1][n2]['temp_edge_cost'] = 1000
+                self.hosp_graph[n1][n2]['temp_edge_cost'] = 1000
 
-        new_length, new_path = nx.single_source_dijkstra(hosp_graph, 'r16', target='r04', weight='temp_edge_cost')
+        new_length, new_path = nx.single_source_dijkstra(self.hosp_graph, curr_node, target=goal_node, weight='temp_edge_cost')
         added = False
         for key, [path, values] in self.paths_dict.items():
             if new_path == path:
@@ -111,14 +113,12 @@ if __name__ == "__main__":
     hosp_graph = HospGraph.unpickle_it(path_to_pickle)
 
     total = 0
-    # for i in range(100):
-    #     start_time = time()
-    #
     for _ in range(100):
+        start_time = time()
         planner = SamplingPlannerClass(hosp_graph)
-        print(planner.get_path(1000))
+        print(planner.get_path(2000, 'r00', 'r10'))
 
-    #     # print(time() - start_time)
-    #     total += time() - start_time
-    #
-    # print(total / 100)
+        #     # print(time() - start_time)
+        total += time() - start_time
+
+    print(total / 100)

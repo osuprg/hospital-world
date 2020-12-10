@@ -186,8 +186,6 @@ class RobotNodeInfo:
                 rospy.loginfo('No current or next node')
                 self.node_pub.publish('Do not record')
 
-
-
     def human_or_no(self):
         self.condition = int(self.hosp_graph[self.current_node_q][self.next_node_q]['hum_cond'])
         print(self.condition)

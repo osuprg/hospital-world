@@ -13,14 +13,14 @@ from std_msgs.msg import String
 from random import uniform, choice
 
 import STRUCT_hospital_graph_class as HospGraph
-import RUN_custom_global_plan_sampling as GlobalSample
+from RUN_custom_global_plan_sampling import SamplingPlannerClass
+import RUN_custom_global_plan_algebraic as custom_alg
 
 
 class MoveRobotAround:
     def __init__(self, hosp_graph):
         self.current_position = None        # Keeps track of robot's current x,y position
         self.current_node = None            # Keeps track of what node the robot is in
-        self.next_node = None
 
         # CHANGE THIS TOO
         self.initial_pose = hosp_graph.graph['initial_pose']
@@ -35,31 +35,21 @@ class MoveRobotAround:
         self.rooms = []                     # List of rooms - used to determine next goal
         self._init_rooms_list()             # Initialize list of rooms
         self.new_plan_pub = rospy.Publisher('new_plan_pub', String, queue_size=10)
-        self.global_planner = rospy.get_param('global_planner_choice')
 
-        self.planner = GlobalSample.SamplingPlannerClass(self.hosp_graph)
-        self.plan_pub = rospy.Publisher('custom_global_plan', String, queue_size=1)
 
     def _init_rooms_list(self):
         # Initilaize list of rooms
         self.rooms = ['r' + '%02d' % i for i in range(self.hosp_graph.graph['num_rooms'])]
 
     def set_current_pose(self, msg):
-
         # Get the current position of the robot and store it
         self.current_position = (msg.pose.pose.position.x + self.initial_pose[0],
                                  msg.pose.pose.position.y + self.initial_pose[1])
-        self.current_node = self.what_node(self.current_position)
+        # print("Current position", self.current_position)
 
-    def what_node(self, point):
-
-        # Update current node from position
-        for node in self.hosp_graph.nodes():
-            # Check the current pose against the location of all nodes to see which one it is in currently
-            if point[0] in self.hosp_graph.nodes[node]['node_loc'][0] \
-                    and point[1] in self.hosp_graph.nodes[node]['node_loc'][1]:
-                return node
-        return None
+    def set_current_node(self, msg):
+        # Saves robot's current node after listening to topic that broadcasts that data
+        self.current_node = msg.data
 
     def select_new_goal(self):
         # Choose a different room to navigate to
@@ -67,10 +57,6 @@ class MoveRobotAround:
         while new_room == self.current_node:
             new_room = choice(self.rooms)
 
-        self.next_node = new_room
-        self.select_point_in_room(new_room)
-
-    def select_point_in_room(self, new_room):
         valid = False
 
         while not valid:
@@ -92,7 +78,12 @@ class MoveRobotAround:
             if not trigger:
                 valid = True
 
-    def movebase_client(self):
+        # print("Next goal chosen:", self.next_goal)
+
+    def get_global_plan(self):
+
+
+    def movebase_client(self, redo=False):
         # Code originally copied from https://hotblackrobotics.github.io/en/blog/2018/01/29/action-client-py/
 
         # Create an action client called "move_base" with action definition file "MoveBaseAction"
@@ -100,6 +91,14 @@ class MoveRobotAround:
 
         # Waits until the action server has started up and started listening for goals.
         client.wait_for_server()
+
+        if not redo:
+            # Select a new goal
+            self.prior_goal = self.next_goal
+            self.select_new_goal()
+        else:
+            # Go back to the last point
+            self.next_goal = self.prior_goal
 
         # Creates a new goal with the MoveBaseGoal constructor
         goal = MoveBaseGoal()
@@ -136,80 +135,6 @@ class MoveRobotAround:
             # Result of executing the action
             return client.get_state()
 
-    def use_custom_planner(self):
-        #TODO: This needs A LOT of error handling
-        self.select_new_goal()
-
-        if self.current_node and self.next_node:
-            print(self.current_node, self.next_node)
-            path = self.planner.get_path(1000, self.current_node, self.next_node)
-
-            self.plan_pub.publish(str(path))
-            rospy.loginfo("new plan: {}".format(path))
-
-            if path:
-                for i in path:
-                    print('going to {}'.format(i))
-                    self.select_point_in_room(i)
-                    self.movebase_client()
-
-                    if self.current_node != i:
-                        self.movebase_client()
-            else:
-                rospy.loginfo("Path was not received from planner")
-        return True
-
-    def run_trials(self):
-
-        iteration = 0
-        total_iterations = 10000
-
-
-        try:
-            while iteration < total_iterations:
-
-                # Tried to break it in such a way that I could catch it. Turns out it's too good.
-                # It either succeeds or can't reach the goal.
-                self.final_it = False
-
-                # if iteration == total_iterations - 2:
-                #     # Out of range
-                #     rowboat_robot.final_it = True
-
-                print("##############")
-                print("Iteration {}".format(iteration))
-                print("##############")
-
-                if self.global_planner == "move_base":
-                    result = self.movebase_client()
-                elif self.global_planner == "sampling":
-                    result = self.use_custom_planner()
-
-                if result:
-
-                    if result != 3:
-                        self.result_from_path = result
-                        redo = True
-                        iteration += 1
-                        print("Robot did not execute proper path")
-
-                    else:
-                        redo = False
-                        iteration += 1
-                        print("Arrived at: ", self.current_position)
-                        rospy.loginfo("Goal execution done!")
-
-                else:
-                    # For when something goes terribly wrong
-                    print("Something has gone terribly wrong")
-                    break
-
-        except rospy.ROSInterruptException:
-            rospy.loginfo("Navigation test finished.")
-            raise
-
-        print("done!")
-
 
 if __name__ == '__main__':
     rospy.init_node('movebase_client_py')
@@ -222,11 +147,8 @@ if __name__ == '__main__':
 
     # Subscribe to a bunch of stuff to get a bunch of info.
     amcl_sub = rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, rowboat_robot.set_current_pose)
-    # graph_node_sub = rospy.Subscriber('node_in_graph', String, rowboat_robot.set_current_node)
+    graph_node_sub = rospy.Subscriber('node_in_graph', String, rowboat_robot.set_current_node)
 
-    rospy.sleep(1)
-
-    rowboat_robot.run_trials()
     # Ugh.
     # This was here from before I added in action server stuff and was writing the subscribers.
     # I spent two days figuring out why the action server wasn't available.
@@ -234,3 +156,51 @@ if __name__ == '__main__':
     # Leaving it in so future me knows not to make the same mistake and spend days on end debugging.
     # You're welcome, future me.
     # rospy.spin()
+
+    iteration = 0
+    total_iterations = 10000
+
+    # Redo is a flag that, if true, sends the robot back to the previous point because something went wrong
+    redo = False
+
+    try:
+        while iteration < total_iterations:
+
+            # Tried to break it in such a way that I could catch it. Turns out it's too good.
+            # It either succeeds or can't reach the goal.
+            rowboat_robot.final_it = False
+
+            # if iteration == total_iterations - 2:
+            #     # Out of range
+            #     rowboat_robot.final_it = True
+
+            print("##############")
+            print("Iteration {}".format(iteration))
+            print("##############")
+
+            result = rowboat_robot.movebase_client(redo)
+
+            if result:
+
+                if result != 3:
+                    rowboat_robot.result_from_path = result
+                    redo = True
+                    iteration += 1
+                    print("Robot did not execute proper path")
+
+                else:
+                    redo = False
+                    iteration += 1
+                    print("Arrived at: ", rowboat_robot.current_position)
+                    rospy.loginfo("Goal execution done!")
+
+            else:
+                # For when something goes terribly wrong
+                print("Something has gone terribly wrong")
+                break
+
+    except rospy.ROSInterruptException:
+        rospy.loginfo("Navigation test finished.")
+        raise
+
+    print("done!")

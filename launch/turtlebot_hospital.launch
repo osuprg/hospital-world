@@ -7,8 +7,9 @@
   <!--  CHANGE THIS TO YOUR WORLD NAME  -->
   <arg name="world_type" default="hospital_v1"/>
 
-  <!-- CHANGE THIS TO THE GRAPH NAME YOU WANT TO USE -->
+  <param name="global_planner_choice" value="move_base" />
   <param name="graph_file_path" value="$(find hospital-world)/pickles/hospital_trials_2020-10-23_plus_stats"/>
+
 
   <arg name="map_file_path" default="$(find hospital-world)/worlds/$(arg world_type)"/>
   <arg name="map_file" default="$(arg map_file_path)/map.yaml"/>
@@ -18,7 +19,7 @@
     <arg name="world_name" value="$(arg world_file)"/>
     <arg name="paused" value="false"/>
     <arg name="use_sim_time" value="true"/>
-    <arg name="gui" value="false"/>
+    <arg name="gui" value="true"/>
     <arg name="headless" value="false"/>
     <arg name="debug" value="false"/>
   </include>

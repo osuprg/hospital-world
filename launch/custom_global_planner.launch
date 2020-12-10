@@ -1,0 +1,19 @@
+<!--
+    Launch file to use the custom sampling-based global planner
+    Anna Nickelson
+-->
+
+
+<launch>
+
+    <!-- CHANGE THIS TO THE GRAPH NAME YOU WANT TO USE -->
+    <param name="graph_file_path" value="$(find hospital-world)/pickles/hospital_trials_2020-10-23_plus_stats"/>
+    <param name="global_planner_choice" value="sampling" />
+
+    <include file="$(find hospital-world)/launch/turtlebot_hospital.launch" />
+
+	<node pkg="hospital-world" name="timer_laser_pub" type="timer.py">
+        <remap from="dummy_laser" to="dummy_sub" />
+    </node>
+
+</launch>
