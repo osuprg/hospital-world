@@ -12,8 +12,6 @@
 
     <include file="$(find hospital-world)/launch/turtlebot_hospital.launch" />
 
-	<node pkg="hospital-world" name="timer_laser_pub" type="timer.py">
-        <remap from="dummy_laser" to="dummy_sub" />
-    </node>
+	<node pkg="hospital-world" name="run_trials_py" type="RUN_trials.py" />
 
 </launch>

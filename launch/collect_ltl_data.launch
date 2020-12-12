@@ -1,0 +1,19 @@
+<!--
+    Launch file to collect long-term learning data
+    Anna Nickelson
+-->
+
+
+<launch>
+
+    <!-- CHANGE THIS TO THE GRAPH NAME YOU WANT TO USE -->
+    <param name="graph_file_path" value="$(find hospital-world)/pickles/STRUCT_hospital_v1_param_pickle"/>
+    <param name="global_planner_choice" value="move_base" />
+
+    <include file="$(find hospital-world)/launch/turtlebot_hospital.launch" />
+
+	<node pkg="hospital-world" name="run_trials_py" type="RUN_trials.py" />
+    <node pkg="hospital-world" name="node_in_graph_py" type="RUN_publish_node_location.py" />
+    <node pkg="hospital-world" name="gather_edge_data_py" type="RUN_gather_edge_data.py" />
+
+</launch>

@@ -22,7 +22,6 @@ class SamplingPlannerClass:
         self.hosp_graph = hosp_graph
         self.current_key = 0
 
-
     def get_path(self, samples, n1, n2):
         for _ in range(samples):
             self.run_samples(n1, n2)
@@ -68,6 +67,7 @@ class SamplingPlannerClass:
 
         new_length, new_path = nx.single_source_dijkstra(self.hosp_graph, curr_node, target=goal_node, weight='temp_edge_cost')
         added = False
+
         for key, [path, values] in self.paths_dict.items():
             if new_path == path:
                 self.paths_dict[key][1].append(new_length)
@@ -98,6 +98,9 @@ class SamplingPlannerClass:
 
         return min_mean[2]
 
+    def re_init(self):
+        self.paths_dict = {}
+        self.current_key = 0
 
 if __name__ == "__main__":
 

@@ -68,6 +68,7 @@ class MoveRobotAround:
             new_room = choice(self.rooms)
 
         self.next_node = new_room
+        rospy.loginfo('New node chosen: {}'.format(new_room))
         self.select_point_in_room(new_room)
 
     def select_point_in_room(self, new_room):
@@ -91,10 +92,12 @@ class MoveRobotAround:
 
             if not trigger:
                 valid = True
+                rospy.loginfo('New nav point chosen: {}'.format(self.next_goal))
 
     def movebase_client(self):
         # Code originally copied from https://hotblackrobotics.github.io/en/blog/2018/01/29/action-client-py/
 
+        # rospy.loginfo("Move_base called")
         # Create an action client called "move_base" with action definition file "MoveBaseAction"
         client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
 
@@ -139,6 +142,7 @@ class MoveRobotAround:
     def use_custom_planner(self):
         #TODO: This needs A LOT of error handling
         self.select_new_goal()
+        self.planner.re_init()
 
         if self.current_node and self.next_node:
             print(self.current_node, self.next_node)
@@ -162,7 +166,7 @@ class MoveRobotAround:
     def run_trials(self):
 
         iteration = 0
-        total_iterations = 10000
+        total_iterations = 100
 
 
         try:
@@ -181,6 +185,8 @@ class MoveRobotAround:
                 print("##############")
 
                 if self.global_planner == "move_base":
+                    rospy.loginfo("because Anna is a dum dum")
+                    self.select_new_goal()
                     result = self.movebase_client()
                 elif self.global_planner == "sampling":
                     result = self.use_custom_planner()
@@ -206,13 +212,13 @@ class MoveRobotAround:
 
         except rospy.ROSInterruptException:
             rospy.loginfo("Navigation test finished.")
-            raise
+            exit()
 
         print("done!")
 
 
 if __name__ == '__main__':
-    rospy.init_node('movebase_client_py')
+    rospy.init_node('run_trials_py')
 
     path_to_pickle = rospy.get_param('graph_file_path')
     hosp_graph = HospGraph.unpickle_it(path_to_pickle)
@@ -224,9 +230,11 @@ if __name__ == '__main__':
     amcl_sub = rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, rowboat_robot.set_current_pose)
     # graph_node_sub = rospy.Subscriber('node_in_graph', String, rowboat_robot.set_current_node)
 
+    # This is here so we don't try to run trials before getting a message from AMCL
     rospy.sleep(1)
 
     rowboat_robot.run_trials()
+
     # Ugh.
     # This was here from before I added in action server stuff and was writing the subscribers.
     # I spent two days figuring out why the action server wasn't available.

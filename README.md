@@ -34,49 +34,112 @@ These are separate stages because we want to wait to collect data until after th
 
 ### STAGE 1: Collect LTL data
 
-Make sure you're pointing to the right 
+[comment]: <> (### Option 1: use the launch file)
+This launch file still needs to be run through more testing, so it may not be 100% reliable.
 
-#### Terminal 1 
+#### Terminal 0:
 ```
-export TURTLEBOT3_MODEL=burger
-roslaunch hospital-world turtlebot_hospital.launch
-```
-
-#### Terminal 2
-```
-rosrun hospital-world RUN_trials.py
+roslaunch hospital-world collect_ltl_data.launch
 ```
 
-#### Terminal 3 
-```
-rosrun hospital-world RUN_publish_node_location.py 
-```
+[comment]: <> (### Option 2: run it manually)
 
-#### Terminal 4
-```
-rosrun hospital-world RUN_gather_edge_data.py
-```
+[comment]: <> (If option one did not work, use option 2!)
+
+[comment]: <> (#### Terminal 0)
+
+[comment]: <> (```)
+
+[comment]: <> (roscore)
+
+[comment]: <> (```)
+
+[comment]: <> (#### Terminal 1 )
+
+[comment]: <> (```)
+
+[comment]: <> (export TURTLEBOT3_MODEL=burger)
+
+[comment]: <> (rosparam set /global_planner_choice 'move_base')
+
+[comment]: <> (roslaunch hospital-world turtlebot_hospital.launch)
+
+[comment]: <> (```)
+
+[comment]: <> (#### Terminal 2)
+
+[comment]: <> (```)
+
+[comment]: <> (rosrun hospital-world RUN_trials.py)
+
+[comment]: <> (```)
+
+[comment]: <> (#### Terminal 3 )
+
+[comment]: <> (```)
+
+[comment]: <> (rosrun hospital-world RUN_publish_node_location.py )
+
+[comment]: <> (```)
+
+[comment]: <> (#### Terminal 4)
+
+[comment]: <> (```)
+
+[comment]: <> (rosrun hospital-world RUN_gather_edge_data.py)
+
+[comment]: <> (```)
 
 
 ### STAGE 2: Use LTL data in global planner
 
-Change the file parameter to point to the correct LTL data file
+[comment]: <> (### Option 1: use the launch file)
+This launch file still needs to be run through more testing, so it may not be 100% reliable.
 
-#### Terminal 1 
+#### Terminal 0:
 ```
-export TURTLEBOT3_MODEL=burger
-roslaunch hospital-world turtlebot_hospital.launch
-```
-
-#### Terminal 2
-```
-rosrun hospital-world RUN_global_planner.py
+roslaunch hospital-world custom_global_planner.launch
 ```
 
-#### Terminal 3 
-```
-rosrun hospital-world RUN_publish_node_location.py 
-```
+[comment]: <> (### Option 2: run it manually)
+
+[comment]: <> (If option one did not work, use option 2!)
+
+[comment]: <> (#### Terminal 0)
+
+[comment]: <> (```)
+
+[comment]: <> (roscore)
+
+[comment]: <> (```)
+
+[comment]: <> (#### Terminal 1 )
+
+[comment]: <> (```)
+
+[comment]: <> (export TURTLEBOT3_MODEL=burger)
+
+[comment]: <> (rosparam set /global_planner_choice 'sampling')
+
+[comment]: <> (roslaunch hospital-world turtlebot_hospital.launch)
+
+[comment]: <> (```)
+
+[comment]: <> (#### Terminal 2)
+
+[comment]: <> (```)
+
+[comment]: <> (rosrun hospital-world RUN_global_planner.py)
+
+[comment]: <> (```)
+
+[comment]: <> (#### Terminal 3 )
+
+[comment]: <> (```)
+
+[comment]: <> (rosrun hospital-world RUN_publish_node_location.py )
+
+[comment]: <> (```)
 
 
 
@@ -102,13 +165,16 @@ File names start with "STRUCT_"
 File names start with "RUN_"
 * **trials.py** - moves the robot in the specified world. Chooses a node, navigates to the node, then chooses another, etc. for a specified number of iterations. 
 * **publish_node_location.py** - has two main functions. These are written in the same node for synchronization:
-    * Publishes which node the robot is currently in - updates as often as /amcl_pose - outputs node to topic 
+    * Publishes which node the robot is currently in and which node it is going to next - updates as often as /amcl_pose - outputs node to topic 
     * Determines the human condition on that specific edge. 
       Decides whether or not humans are present for this iteration based on the human condition. 
       Changes the top speed of the robot depending on presence / absence of humans and publishes the current condition.
 * **gather_edge_data.py** - 
   subscribes to topic outputting the robot's current node - times how long it takes to switch nodes, updates the 'weight' interval (in hospital class). 
   Pickles and saves file every 5 minutes and on exit. Make sure to check / change the file path where you want it to save - specified just after imports.
+* **custom_global_planner_sampling.py** - 
+  This is the custom global planner used under the hood in RUN_trials.
+  In order to use this, the 'global_planner_choice' parameter must be set to 'sampling', which is done automatically in the custom_global_planner.launch file.
 
 ### Analyze data (Science!)
 File names start with "POST_"
@@ -121,8 +187,6 @@ File names start with "POST_"
 #### Structural:
 
 * Write launch files (because 5 terminal launch sequence is ridiculous)
-    * Gather 'long-term learning' data
-    * Run custom global planner using LTL data
     * Run custom global planner vs dijkstra and collect data
 * Update room nodes to be the centroid of the room. 
   Currently the node spans the entire room, which causes timing issues
@@ -134,6 +198,7 @@ File names start with "POST_"
 #### Running:
 
 * Write a new node to take in the custom global plan and send it to move_base one node at a time (action server)
+* Pick centroid of node for nav point
 
 #### Science!:
 
@@ -150,3 +215,5 @@ Done:
 * ~~Print interval out to file (pickle the hospital world when exiting)~~
 * ~~Make this into a ros package instead of a bunch of random files~~
 * ~~Clean up move_base file - some of the comments / commented out sections are leftover from an old project~~
+* ~~Launch file to gather 'long-term learning' data~~
+* ~~Launch file to run custom global planner using LTL data~~

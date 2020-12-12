@@ -137,6 +137,9 @@ class RobotNodeInfo:
         if current_node:
             self.current_node_msg = current_node
 
+        if not self.plan:
+            return
+
         # If we have reached a new node
         if self.prior_node_msg != self.current_node_msg:
 
