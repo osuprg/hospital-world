@@ -12,6 +12,11 @@ from geometry_msgs.msg import PoseWithCovarianceStamped
 from std_msgs.msg import String
 from random import uniform, choice
 
+# python things
+from numpy import arctan2
+import tf
+
+# custom things
 import STRUCT_hospital_graph_class as HospGraph
 import RUN_custom_global_plan_sampling as GlobalSample
 
@@ -26,6 +31,7 @@ class MoveRobotAround:
         self.initial_pose = hosp_graph.graph['initial_pose']
 
         self.next_goal = (0.0, 0.0)         # Initialize robot's initial location
+        self.goal_orientation = [0, 0, 0, 1]
         self.prior_goal = (0.0, 0.0)        # Initialize robot's prior goal with its starting position
         self.break_goal = (-3.16, 8.22)     # Goal to test the move_base- should be outside the bounds
         self.result_from_path = 3           # Result of a successful path
@@ -69,30 +75,46 @@ class MoveRobotAround:
 
         self.next_node = new_room
         rospy.loginfo('New node chosen: {}'.format(new_room))
-        self.select_point_in_room(new_room)
+        self.next_goal = self.select_point_in_room(new_room)
 
     def select_point_in_room(self, new_room):
         valid = False
 
         while not valid:
-            # Uniformly select a random point in the new room - numbers are offset by 0.5 so the goal is not close to a wall
-            self.next_goal = (uniform(self.hosp_graph.nodes[new_room]['node_loc'][0].low + 0.5,
-                                      self.hosp_graph.nodes[new_room]['node_loc'][0].high - 0.5),
-                              uniform(self.hosp_graph.nodes[new_room]['node_loc'][1].low + 0.5,
-                                      self.hosp_graph.nodes[new_room]['node_loc'][1].high - 0.5))
+            # Select point in the center of the node
+            x_mid = (self.hosp_graph.nodes[new_room]['node_loc'][0].low +
+                     self.hosp_graph.nodes[new_room]['node_loc'][0].high) /2
+            y_mid = (self.hosp_graph.nodes[new_room]['node_loc'][1].low +
+                     self.hosp_graph.nodes[new_room]['node_loc'][1].high) /2
+            next_goal = (x_mid, y_mid)
 
             # Check that it is not in a convex portion of the room
             # TODO: Change this to check ALL 'excl' portions of the map / find a better way to ignore those portions
             exclusions = [key for key in self.hosp_graph.nodes() if 'ex' in key]
             trigger = False
             for key in exclusions:
-                if self.next_goal[0] in self.hosp_graph.nodes[key]['node_loc'][0] and \
-                        self.next_goal[1] in self.hosp_graph.nodes[key]['node_loc'][1]:
+                if next_goal[0] in self.hosp_graph.nodes[key]['node_loc'][0] and \
+                        next_goal[1] in self.hosp_graph.nodes[key]['node_loc'][1]:
                     trigger = True
 
+            # If it is not in an exclusion zone, then exit loop and return the goal
             if not trigger:
                 valid = True
-                rospy.loginfo('New nav point chosen: {}'.format(self.next_goal))
+                rospy.loginfo('New nav point chosen: {}'.format(next_goal))
+                return next_goal
+
+    def set_goal_orientation(self, n0, n1):
+        # Sets the goal orientation to be the vector between the prior and current nodes
+        # Currently using this as a proxy to get the robot to stay relatively in line with the path
+
+        p0 = self.select_point_in_room(new_room=n0)
+        p1 = self.select_point_in_room(new_room=n1)
+
+        del_x = p1[0] - p0[0]
+        del_y = p1[1] - p0[1]
+
+        new_yaw = arctan2(del_y, del_x)
+        self.goal_orientation = tf.transformations.quaternion_from_euler(0, 0, new_yaw)
 
     def movebase_client(self):
         # Code originally copied from https://hotblackrobotics.github.io/en/blog/2018/01/29/action-client-py/
@@ -117,10 +139,10 @@ class MoveRobotAround:
         # print("New goal (amcl): {0} {1}".format(goal.target_pose.pose.position.x, goal.target_pose.pose.position.y))
 
         # No rotation of the mobile base frame w.r.t. map frame
-        goal.target_pose.pose.orientation.x = 0.0
-        goal.target_pose.pose.orientation.y = 0.0
-        goal.target_pose.pose.orientation.z = 0.0
-        goal.target_pose.pose.orientation.w = 1.0
+        goal.target_pose.pose.orientation.x = self.goal_orientation[0]
+        goal.target_pose.pose.orientation.y = self.goal_orientation[1]
+        goal.target_pose.pose.orientation.z = self.goal_orientation[2]
+        goal.target_pose.pose.orientation.w = self.goal_orientation[3]
 
         # Sends the goal to the action server.
         client.send_goal(goal)
@@ -152,19 +174,24 @@ class MoveRobotAround:
             rospy.loginfo("new plan: {}".format(path))
 
             if path:
-                for i in path:
-                    print('going to {}'.format(i))
-                    self.select_point_in_room(i)
+                for i in range(len(path)):
+                    print('going to {}'.format(path[i]))
+                    self.select_point_in_room(path[i])
+                    try:
+                        self.set_goal_orientation(path[i], path[i + 1])
+                    except IndexError:
+                        self.goal_orientation = [0, 0, 0, 1]
+
                     self.movebase_client()
 
-                    if self.current_node != i:
+                    if self.current_node != path[i]:
                         self.movebase_client()
             else:
                 rospy.loginfo("Path was not received from planner")
         return True
 
     def run_trials(self):
-
+        rospy.loginfo('starting trial runs')
         iteration = 0
         total_iterations = 100
 
@@ -182,13 +209,15 @@ class MoveRobotAround:
 
                 print("##############")
                 print("Iteration {}".format(iteration))
+                rospy.loginfo('Iteration {}'.format(iteration))
                 print("##############")
 
                 if self.global_planner == "move_base":
-                    rospy.loginfo("because Anna is a dum dum")
+                    rospy.loginfo('running standard move_base')
                     self.select_new_goal()
                     result = self.movebase_client()
                 elif self.global_planner == "sampling":
+                    rospy.loginfo('running sampling based global planner')
                     result = self.use_custom_planner()
 
                 if result:
@@ -197,17 +226,17 @@ class MoveRobotAround:
                         self.result_from_path = result
                         redo = True
                         iteration += 1
-                        print("Robot did not execute proper path")
+                        rospy.loginfo("Robot did not execute proper path")
 
                     else:
                         redo = False
                         iteration += 1
-                        print("Arrived at: ", self.current_position)
+                        rospy.loginfo("Arrived at: ", self.current_position)
                         rospy.loginfo("Goal execution done!")
 
                 else:
                     # For when something goes terribly wrong
-                    print("Something has gone terribly wrong")
+                    rospy.loginfo("Something has gone terribly wrong")
                     break
 
         except rospy.ROSInterruptException:
@@ -219,6 +248,7 @@ class MoveRobotAround:
 
 if __name__ == '__main__':
     rospy.init_node('run_trials_py')
+    rospy.loginfo('run_trials_py node started')
 
     path_to_pickle = rospy.get_param('graph_file_path')
     hosp_graph = HospGraph.unpickle_it(path_to_pickle)

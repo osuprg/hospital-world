@@ -23,7 +23,7 @@ def plot_it(hosp_graph):
 
 if __name__ == "__main__":
 
-    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/STRUCT_hospital_v1_param_pickle'
+    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/STRUCT_hospital_v1_param_pickle_201512'
     hosp_graph = HospGraph.unpickle_it(path_to_pickle)
 
     plot_it(hosp_graph)

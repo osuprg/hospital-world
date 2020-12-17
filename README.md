@@ -188,8 +188,6 @@ File names start with "POST_"
 
 * Write launch files (because 5 terminal launch sequence is ridiculous)
     * Run custom global planner vs dijkstra and collect data
-* Update room nodes to be the centroid of the room. 
-  Currently the node spans the entire room, which causes timing issues
 * Change to use sim, not real, time.
   Speed up sim time.
 * What to do about rotate recovery? I guess leave it in because it might be a navigation error challenge - what if it oscillates between two nodes really fast?
@@ -197,8 +195,9 @@ File names start with "POST_"
 
 #### Running:
 
-* Write a new node to take in the custom global plan and send it to move_base one node at a time (action server)
-* Pick centroid of node for nav point
+* Test new goal locations (center of nodes) then re-run data collection
+* Change move_base goal orientation. Possible to ignore orientation or only use final orientation? 
+
 
 #### Science!:
 
@@ -217,3 +216,7 @@ Done:
 * ~~Clean up move_base file - some of the comments / commented out sections are leftover from an old project~~
 * ~~Launch file to gather 'long-term learning' data~~
 * ~~Launch file to run custom global planner using LTL data~~
+* ~~Update room nodes to be the centroid of the room. 
+  Currently the node spans the entire room, which causes timing issues~~
+* ~~Write a new node to take in the custom global plan and send it to move_base one node at a time (action server)~~
+* ~~Pick centroid of node for nav point~~

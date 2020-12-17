@@ -171,9 +171,13 @@ class HospitalGraph:
         # This will give the system x,y bounds for each room
         # This is used to choose where to autonomously drive next
         if node_info[1] is not 'x':
+            # Get the midpoint in the space
+            mid_x = (node_info[1] + node_info[2]) / 2
+            mid_y = (node_info[3] + node_info[4]) / 2
+
             self.G.add_node(node_info[0],
-                            node_loc=[cust_interval(node_info[1], node_info[2]),
-                                      cust_interval(node_info[3], node_info[4])],
+                            node_loc=[cust_interval(mid_x - 0.1, mid_x + 0.1),
+                                      cust_interval(mid_y - 0.1, mid_y + 0.1)],
                             hum_cond=node_info[-1])  # Adds the human presence condition
 
     def _add_door_loc_sans_a(self, node_info):
@@ -461,14 +465,14 @@ if __name__ == "__main__":
     connected_rooms = True
 
     path_to_raw_param = '/home/toothless/workspaces/research_ws/src/hospital-world/scripts/STRUCT_hospital_v1_parameters_raw.txt'
-    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/STRUCT_hospital_v1_param_pickle'
+    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/STRUCT_hospital_v1_param_pickle_201512'
 
     # Set up a NetworkX graph of the building / hospital
     hospital = HospitalGraph(num_rooms, num_halls, extra_doors, hall_door_links, extra_door_hall_links,
                              connected_halls, connected_rooms, path_to_raw_param, initial_pose)
-    # pickle_it(hospital.G, path_to_pickle)
+    pickle_it(hospital.G, path_to_pickle)
 
-    print(hospital.G['h00']['r08_d00']['hum_cond'])
+    # print(hospital.G['h00']['r08_d00']['hum_cond'])
     # print(hospital.G.nodes())
     # print([n for n in hospital.G.neighbors('r00_d00b')])
     # print(hospital.G.nodes['r00']['node_loc'][0])
