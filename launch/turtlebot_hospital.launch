@@ -10,8 +10,11 @@
 <!--  <param name="graph_file_path" value="$(find hospital-world)/pickles/STRUCT_hospital_v1_param_pickle"/>-->
 
   <!--  REMOVE THESE!!! -->
-  <param name="graph_file_path" value="$(find hospital-world)/pickles/hospital_trials_2020-10-23_plus_stats"/>
-  <param name="global_planner_choice" value="sampling" />
+<!--  <param name="graph_file_path" value="$(find hospital-world)/pickles/hospital_trials_2020-10-23_plus_stats"/>-->
+<!--  <param name="global_planner_choice" value="sampling" />-->
+  <param name="graph_file_path" value="$(find hospital-world)/pickles/STRUCT_hospital_v1_param_pickle_201512" />
+  <param name="global_planner_choice" value="move_base" />
+
 
   <arg name="map_file_path" default="$(find hospital-world)/worlds/$(arg world_type)"/>
   <arg name="map_file" default="$(arg map_file_path)/map.yaml"/>
@@ -21,7 +24,7 @@
     <arg name="world_name" value="$(arg world_file)"/>
     <arg name="paused" value="false"/>
     <arg name="use_sim_time" value="true"/>
-    <arg name="gui" value="true"/>
+    <arg name="gui" value="false"/>
     <arg name="headless" value="false"/>
     <arg name="debug" value="false"/>
   </include>

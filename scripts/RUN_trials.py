@@ -14,7 +14,7 @@ from random import uniform, choice
 
 # python things
 from numpy import arctan2
-import tf
+from squaternion import Quaternion
 
 # custom things
 import STRUCT_hospital_graph_class as HospGraph
@@ -42,6 +42,7 @@ class MoveRobotAround:
         self._init_rooms_list()             # Initialize list of rooms
         self.new_plan_pub = rospy.Publisher('new_plan_pub', String, queue_size=10)
         self.global_planner = rospy.get_param('global_planner_choice')
+        rospy.loginfo('Global planner chosen: {}'.format(self.global_planner))
 
         self.planner = GlobalSample.SamplingPlannerClass(self.hosp_graph)
         self.plan_pub = rospy.Publisher('custom_global_plan', String, queue_size=1)
@@ -74,7 +75,7 @@ class MoveRobotAround:
             new_room = choice(self.rooms)
 
         self.next_node = new_room
-        rospy.loginfo('New node chosen: {}'.format(new_room))
+        # rospy.loginfo('New node chosen: {}'.format(new_room))
         self.next_goal = self.select_point_in_room(new_room)
 
     def select_point_in_room(self, new_room):
@@ -100,7 +101,6 @@ class MoveRobotAround:
             # If it is not in an exclusion zone, then exit loop and return the goal
             if not trigger:
                 valid = True
-                rospy.loginfo('New nav point chosen: {}'.format(next_goal))
                 return next_goal
 
     def set_goal_orientation(self, n0, n1):
@@ -114,10 +114,12 @@ class MoveRobotAround:
         del_y = p1[1] - p0[1]
 
         new_yaw = arctan2(del_y, del_x)
-        self.goal_orientation = tf.transformations.quaternion_from_euler(0, 0, new_yaw)
+        self.goal_orientation = Quaternion.from_euler(0, 0, new_yaw)
+        rospy.loginfo('New orientation: {}'.format(self.goal_orientation))
 
     def movebase_client(self):
         # Code originally copied from https://hotblackrobotics.github.io/en/blog/2018/01/29/action-client-py/
+        rospy.loginfo('New nav point chosen: {}'.format(self.next_goal))
 
         # rospy.loginfo("Move_base called")
         # Create an action client called "move_base" with action definition file "MoveBaseAction"
@@ -138,11 +140,11 @@ class MoveRobotAround:
 
         # print("New goal (amcl): {0} {1}".format(goal.target_pose.pose.position.x, goal.target_pose.pose.position.y))
 
-        # No rotation of the mobile base frame w.r.t. map frame
-        goal.target_pose.pose.orientation.x = self.goal_orientation[0]
-        goal.target_pose.pose.orientation.y = self.goal_orientation[1]
-        goal.target_pose.pose.orientation.z = self.goal_orientation[2]
-        goal.target_pose.pose.orientation.w = self.goal_orientation[3]
+        # Squaternion defines Quaternion as (w, x, y, z) NOT (x, y, z, w)
+        goal.target_pose.pose.orientation.x = self.goal_orientation[1]
+        goal.target_pose.pose.orientation.y = self.goal_orientation[2]
+        goal.target_pose.pose.orientation.z = self.goal_orientation[3]
+        goal.target_pose.pose.orientation.w = self.goal_orientation[0]
 
         # Sends the goal to the action server.
         client.send_goal(goal)
@@ -167,16 +169,18 @@ class MoveRobotAround:
         self.planner.re_init()
 
         if self.current_node and self.next_node:
-            print(self.current_node, self.next_node)
+            rospy.loginfo('Current node {}, new node {}'.format(self.current_node, self.next_node))
             path = self.planner.get_path(1000, self.current_node, self.next_node)
 
             self.plan_pub.publish(str(path))
             rospy.loginfo("new plan: {}".format(path))
 
             if path:
+
                 for i in range(len(path)):
-                    print('going to {}'.format(path[i]))
-                    self.select_point_in_room(path[i])
+                    rospy.loginfo('going to {}'.format(path[i]))
+                    self.next_goal = self.select_point_in_room(path[i])
+                    rospy.loginfo('new point selected {}'.format(self.next_goal))
                     try:
                         self.set_goal_orientation(path[i], path[i + 1])
                     except IndexError:
@@ -193,11 +197,10 @@ class MoveRobotAround:
     def run_trials(self):
         rospy.loginfo('starting trial runs')
         iteration = 0
-        total_iterations = 100
-
+        total_iterations = 1000000
 
         try:
-            while iteration < total_iterations:
+            while iteration < total_iterations and not rospy.is_shutdown():
 
                 # Tried to break it in such a way that I could catch it. Turns out it's too good.
                 # It either succeeds or can't reach the goal.
@@ -231,7 +234,7 @@ class MoveRobotAround:
                     else:
                         redo = False
                         iteration += 1
-                        rospy.loginfo("Arrived at: ", self.current_position)
+                        rospy.loginfo("Arrived at: {}".format(self.current_position))
                         rospy.loginfo("Goal execution done!")
 
                 else:

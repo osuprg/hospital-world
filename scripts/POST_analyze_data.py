@@ -7,22 +7,22 @@ import matplotlib.pyplot as plt
 
 
 def plot_it(n1, n2, data_to_plot, cond):
-    xmin = min(data_to_plot)
-    xmax = max(data_to_plot)
-
-    if xmax - xmin < 10:
-        xmax = xmin + 10
-
-    plt.xlim(xmin - 0.5, xmax)
-    plt.hist(data_to_plot, bins=20)
+    # xmin = min(data_to_plot)
+    # xmax = max(data_to_plot)
+    #
+    # if xmax - xmin < 10:
+    #     xmax = xmin + 10
+    #
+    # plt.xlim(xmin - 0.5, xmax)
+    plt.hist(data_to_plot, bins=50)
     # plt.axis([0, 60, 0, 20])
     plt.title('Times between {} and {}. Data Points: {}. Condition: {}'.format(n1, n2, len(data_to_plot), cond))
     plt.savefig('Times between {} and {} cond {}'.format(n1, n2, cond))
     plt.clf()
 
 def plot_mult(n1, n2, data_no, data_hum):
-    plt.hist(data_no, bins=20, alpha=0.5, label='no')
-    plt.hist(data_hum, bins=20, alpha=0.5, label='hum')
+    plt.hist(data_no, bins=50, alpha=0.5, label='no')
+    plt.hist(data_hum, bins=50, alpha=0.5, label='hum')
 
     # plt.axis([0, 60, 0, 20])
     plt.title('Times between {} and {}. Data Points - no: {}, hum: {}'.format(n1, n2, len(data_no), len(data_hum)))
@@ -31,7 +31,7 @@ def plot_mult(n1, n2, data_no, data_hum):
     plt.clf()
 
 if __name__ == "__main__":
-    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_2020-10-23'
+    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_2020-12-19_plus_stats'
     hosp_graph = HospGraph.unpickle_it(path_to_pickle)
 
     for (n1, n2) in hosp_graph.edges():

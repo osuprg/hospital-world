@@ -42,53 +42,53 @@ This launch file still needs to be run through more testing, so it may not be 10
 roslaunch hospital-world collect_ltl_data.launch
 ```
 
-[comment]: <> (### Option 2: run it manually)
+### Option 2: run it manually
 
-[comment]: <> (If option one did not work, use option 2!)
+If option one did not work, use option 2!
 
-[comment]: <> (#### Terminal 0)
+#### Terminal 0
 
-[comment]: <> (```)
+```
 
-[comment]: <> (roscore)
+roscore
 
-[comment]: <> (```)
+```
 
-[comment]: <> (#### Terminal 1 )
+#### Terminal 1 
 
-[comment]: <> (```)
+```
 
-[comment]: <> (export TURTLEBOT3_MODEL=burger)
+export TURTLEBOT3_MODEL=burger
 
-[comment]: <> (rosparam set /global_planner_choice 'move_base')
+rosparam set /global_planner_choice 'move_base'
 
-[comment]: <> (roslaunch hospital-world turtlebot_hospital.launch)
+roslaunch hospital-world turtlebot_hospital.launch
 
-[comment]: <> (```)
+```
 
-[comment]: <> (#### Terminal 2)
+#### Terminal 2
 
-[comment]: <> (```)
+```
 
-[comment]: <> (rosrun hospital-world RUN_trials.py)
+rosrun hospital-world RUN_trials.py
 
-[comment]: <> (```)
+```
 
-[comment]: <> (#### Terminal 3 )
+#### Terminal 3 
 
-[comment]: <> (```)
+```
 
-[comment]: <> (rosrun hospital-world RUN_publish_node_location.py )
+rosrun hospital-world RUN_publish_node_location.py 
 
-[comment]: <> (```)
+```
 
-[comment]: <> (#### Terminal 4)
+#### Terminal 4
 
-[comment]: <> (```)
+```
 
-[comment]: <> (rosrun hospital-world RUN_gather_edge_data.py)
+rosrun hospital-world RUN_gather_edge_data.py
 
-[comment]: <> (```)
+```
 
 
 ### STAGE 2: Use LTL data in global planner

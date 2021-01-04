@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     # Yes this is terribly dumb, but you have to write out the full filepath
     # Otherwise it will save to the directory from which you are running the script
-    path_and_name = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_2020-10-23'
+    path_and_name = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_2020-12-19'
     hosp_graph = HospGraph.unpickle_it(path_and_name)
 
     for (n1, n2) in hosp_graph.edges():
