@@ -71,8 +71,17 @@ class MoveRobotAround:
     def select_new_goal(self):
         # Choose a different room to navigate to
         new_room = self.current_node
-        while new_room == self.current_node:
+        trigger = False
+        while new_room == self.current_node or not trigger:
             new_room = choice(self.rooms)
+            rospy.loginfo('current room: {}, new room selected: {}'.format(self.current_node, new_room))
+            if self.current_node:
+                new_rm_num = int(new_room[1:3])
+                curr_rm_num = int(self.current_node[1:3])
+                if new_rm_num != (curr_rm_num + 1) % 21 and curr_rm_num != (new_rm_num + 1) % 21:
+                    trigger = True
+            else:
+                trigger = True
 
         self.next_node = new_room
         # rospy.loginfo('New node chosen: {}'.format(new_room))

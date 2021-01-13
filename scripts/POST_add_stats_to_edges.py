@@ -24,7 +24,7 @@ class AddStats:
             self.add_stats(n1, n2)
 
         print("total removed: {} of {}".format(self.tot_start - self.tot_end, self.tot_start))
-        HospGraph.pickle_it(self.hosp_graph, self.file_path + '_plus_stats_clean')
+        # HospGraph.pickle_it(self.hosp_graph, self.file_path + '_plus_stats_clean')
 
     def euclidean_dist(self, n1, n2):
         n1_loc = self.hosp_graph.nodes[n1]['node_loc']
@@ -85,10 +85,11 @@ class AddStats:
         min_val = self.hosp_graph[n1][n2]['min_dist'] / self.top_speed
         # min_val = 0
         print(min_val)
+        max_val = 200
 
         start_no = len(self.hosp_graph[n1][n2]['trav_data_no'])
         self.tot_start += start_no
-        new_arr = [j for j in self.hosp_graph[n1][n2]['trav_data_no'] if j >= min_val]
+        new_arr = [j for j in self.hosp_graph[n1][n2]['trav_data_no'] if min_val <= j <= max_val]
         self.hosp_graph[n1][n2]['trav_data_no'] = new_arr
         end_no = len(self.hosp_graph[n1][n2]['trav_data_no'])
         self.tot_end += end_no
@@ -102,7 +103,7 @@ class AddStats:
 
         start_hum = len(self.hosp_graph[n1][n2]['trav_data_hum'])
         self.tot_start += start_hum
-        new_arr_hum = [i for i in self.hosp_graph[n1][n2]['trav_data_hum'] if i >= min_val]
+        new_arr_hum = [i for i in self.hosp_graph[n1][n2]['trav_data_hum'] if min_val <= i <= max_val]
         self.hosp_graph[n1][n2]['trav_data_hum'] = new_arr_hum
         end_hum = len(self.hosp_graph[n1][n2]['trav_data_hum'])
         self.tot_end += end_hum
@@ -120,7 +121,7 @@ if __name__ == "__main__":
 
     # Yes this is terribly dumb, but you have to write out the full filepath
     # Otherwise it will save to the directory from which you are running the script
-    path_and_name = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_2020-12-19'
+    path_and_name = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_2021-01-08'
 
     add_stats_cl = AddStats(path_and_name)
 

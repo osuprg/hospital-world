@@ -16,13 +16,15 @@ def weight_function_1(n1, n2, dict):
     pct_hum = dict['pct_hum']
     mean_hum = dict['mean_hum']
     mean_no = dict['mean_no']
+    euclidean = dict['euclidean_dist']
 
     # If there is nothing for mean_hum
     if not mean_hum:
         # and nothing for mean_no
         if not mean_no:
-            # Return a huge number
-            return 10000
+            # Divide the euclidean distance by the top speed of the robot, dampened by 20%
+            return euclidean / (0.22 * 0.8)
+
         # Otherwise return mean_no
         else:
             return mean_no

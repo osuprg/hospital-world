@@ -87,7 +87,7 @@ class RobotTiming:
                 self.hosp_graph[self.current_node][self.next_node]['weight' + self.hum_cond].high = trav_time
             # print('new interval: ', self.hosp_graph[self.current_node][self.next_node]['weight'])
             self.hosp_graph[self.current_node][self.next_node]['trav_data' + self.hum_cond].append(trav_time)
-            print(self.next_node, self.current_node, self.hum_cond)
+            print(self.next_node, self.current_node, self.hum_cond, trav_time)
             print("traversal data set", self.hosp_graph[self.current_node][self.next_node]['trav_data' + self.hum_cond])
         except KeyError:
             print("those nodes are not connected")
