@@ -110,8 +110,8 @@ class DataAccumulated:
         self.times = []
 
 if __name__ == "__main__":
-    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_2021-01-08_plus_stats_clean'
-    path_to_paths_file = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/paths_generated_2021-01-08_clean_data_run06'
+    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_2021-01-15_plus_stats_clean'
+    path_to_paths_file = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/paths_generated_2021-01-15_clean_data_run01'
     paths_data = unpickle_it(path_to_paths_file)
     hosp_graph = HospGraph.unpickle_it(path_to_pickle)
 

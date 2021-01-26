@@ -8,6 +8,7 @@ import pickle
 from STRUCT_interval_cust import Interval as cust_interval
 from os import getcwd
 import pickle
+from datetime import date
 
 """
 Rooms are in the format 'r##'
@@ -178,6 +179,7 @@ class HospitalGraph:
             self.G.add_node(node_info[0],
                             node_loc=[cust_interval(mid_x - 0.1, mid_x + 0.1),
                                       cust_interval(mid_y - 0.1, mid_y + 0.1)],
+                            rm_loc=[[node_info[1], node_info[2]], [node_info[3], node_info[4]]],
                             hum_cond=node_info[-1])  # Adds the human presence condition
 
     def _add_door_loc_sans_a(self, node_info):
@@ -371,6 +373,7 @@ class HospitalGraph:
         self.G.add_node(node_info[0],
                         node_loc=[cust_interval(node_info[5], node_info[6]),
                                   cust_interval(node_info[7], node_info[8])],
+                        rm_loc=[[node_info[5], node_info[6]], [node_info[7], node_info[8]]],
                         hum_cond=node_info[-1])  # Adds the human presence condition
 
         # self.G.nodes[node_info[0]]['node_loc'] = [interval_cust.Interval(node_info[5], node_info[6]),
@@ -465,7 +468,7 @@ if __name__ == "__main__":
     connected_rooms = True
 
     path_to_raw_param = '/home/toothless/workspaces/research_ws/src/hospital-world/scripts/STRUCT_hospital_v1_parameters_raw.txt'
-    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/STRUCT_hospital_v1_param_pickle_201512'
+    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/STRUCT_hospital_v1_param_pickle_{}'.format(date.today())
 
     # Set up a NetworkX graph of the building / hospital
     hospital = HospitalGraph(num_rooms, num_halls, extra_doors, hall_door_links, extra_door_hall_links,

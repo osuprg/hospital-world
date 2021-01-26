@@ -14,7 +14,7 @@ class AddStats:
 
         self.tot_start = 0
         self.tot_end = 0
-        self.main()
+        # self.main()
 
     def main(self):
         for (n1, n2) in self.hosp_graph.edges():
@@ -24,7 +24,7 @@ class AddStats:
             self.add_stats(n1, n2)
 
         print("total removed: {} of {}".format(self.tot_start - self.tot_end, self.tot_start))
-        # HospGraph.pickle_it(self.hosp_graph, self.file_path + '_plus_stats_clean')
+        HospGraph.pickle_it(self.hosp_graph, self.file_path + '_plus_stats_clean')
 
     def euclidean_dist(self, n1, n2):
         n1_loc = self.hosp_graph.nodes[n1]['node_loc']
@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
     # Yes this is terribly dumb, but you have to write out the full filepath
     # Otherwise it will save to the directory from which you are running the script
-    path_and_name = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_2021-01-08'
+    path_and_name = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_2021-01-25_hum_50_70'
 
     add_stats_cl = AddStats(path_and_name)
-
+    add_stats_cl.main()

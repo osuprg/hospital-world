@@ -11,7 +11,7 @@ import STRUCT_hospital_graph_class as HospGraph
 
 # Yes this is terribly dumb, but you have to write out the full filepath
 # Otherwise it will save to the directory from which you are running the script
-path_and_name = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_{}'.format(date.today())
+path_and_name = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_{}_hum_50_70'.format(date.today())
 
 
 class RobotTiming:
