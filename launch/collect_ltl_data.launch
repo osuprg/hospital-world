@@ -7,7 +7,7 @@
 <launch>
 
     <!-- CHANGE THIS TO THE GRAPH NAME YOU WANT TO USE -->
-    <param name="graph_file_path" value="$(find hospital-world)/pickles/STRUCT_hospital_v1_param_pickle"/>
+<!--    <param name="graph_file_path" value="$(find hospital-world)/pickles/STRUCT_hospital_v1_param_pickle_2021-01-25"/>-->
     <param name="global_planner_choice" value="move_base" />
 
     <include file="$(find hospital-world)/launch/turtlebot_hospital.launch" />

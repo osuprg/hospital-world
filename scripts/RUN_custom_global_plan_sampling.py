@@ -155,7 +155,7 @@ def pickle_it(obj_to_pickle, file_path_and_name):
 
 
 if __name__ == "__main__":
-
+    pass
     # Use this if running on robot / with ROS up
     # This takes 0.16407 seconds on startup - significantly slower but it only has to happen once per node so... meh?
     # rospy.init_node('sampling_global_planner')
