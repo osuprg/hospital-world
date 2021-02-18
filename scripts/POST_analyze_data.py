@@ -69,7 +69,7 @@ def plot_mult(n1, n2, data_no, data_hum, mean_no, mean_hum):
 
 
 if __name__ == "__main__":
-    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_2021-01-25_hum_50_70_plus_stats_clean'
+    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_2021-02-11_hum_50_70_plus_stats_clean'
     hosp_graph = HospGraph.unpickle_it(path_to_pickle)
 
     mean_no_all = 0

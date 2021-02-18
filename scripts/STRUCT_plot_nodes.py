@@ -24,7 +24,8 @@ class plot_hospital:
             self.add_weights_from_data(n1, n2)
 
         plt.axis('scaled')
-        plt.show()
+        plt.savefig('Path Comparison Plot')
+        plt.clf()
 
     def add_walls(self, node):
         # This plots the basic outlines of the rooms and walls

@@ -6,10 +6,11 @@
 # Python things
 from time import time
 import networkx as nx
-from random import random, randint, sample
+from random import random, randint, sample, choice
 import numpy as np
 from statistics import mean, stdev, StatisticsError
 import pickle
+from math import sqrt
 
 # Custom things
 import STRUCT_hospital_graph_class as HospGraph
@@ -31,53 +32,64 @@ class SamplingPlannerClass:
         new_path = self.paths_dict[key][0]
         return average, new_path
 
-    def run_samples(self, curr_node, goal_node):
+    def fallback(self, dict):
+        euclid = dict['euclidean_dist']
+        # return euclid / (0.22 * 0.98)
+        return 1000
 
+    def set_temp_graph(self, real_data=False, ignore_hum=False):
         # Get edge attributes. This is not necessary, but makes the code easier to read
         pct_hum = nx.get_edge_attributes(self.hosp_graph, 'pct_hum')
         means_hum = nx.get_edge_attributes(self.hosp_graph, 'mean_hum')
         std_hum = nx.get_edge_attributes(self.hosp_graph, 'std_hum')
         means_no = nx.get_edge_attributes(self.hosp_graph, 'mean_no')
         std_no = nx.get_edge_attributes(self.hosp_graph, 'std_no')
+        trav_data_no = nx.get_edge_attributes(self.hosp_graph, 'trav_data_no')
+        trav_data_hum = nx.get_edge_attributes(self.hosp_graph, 'trav_data_hum')
 
-        # Each time we run a sample, we're going to
         for (n1, n2) in self.hosp_graph.edges():
-            # print('----------- {} to {} -----------'.format(n1, n2))
-            # Decide whether or not there will be a human on the edge
             human_on_edge = False
-
-            percent_on_edge = pct_hum[n1, n2]
-            if percent_on_edge and random() < percent_on_edge:
-                human_on_edge = True
-
-            # print('human: ', human_on_edge)
-
-            # Then get the timing for that edge
             try:
+                curr_pct_hum = pct_hum[n1, n2]
+            except KeyError:
+                dummy = n1
+                n1 = n2
+                n2 = dummy
+                curr_pct_hum = pct_hum[n1, n2]
+
+            if not ignore_hum:
+                # Decide whether or not there will be a human on the edge
+                if curr_pct_hum and random() < curr_pct_hum:
+                    human_on_edge = True
+
+            # try:
+            if real_data:
+                # print('real data')
+                edge_cost = choice(trav_data_no[n1, n2] + trav_data_hum[n1, n2])
+                hum_dist = 0
+            else:
                 if human_on_edge:
+                    # print('human')
                     edge_cost = np.random.normal(means_hum[n1, n2], std_hum[n1, n2])
-                    # print('HUM | mean: {} | std: {}'.format(means_hum[n1, n2], std_hum[n1, n2]))
+                    hum_dist = self.hosp_graph[n1][n2]['four_connect_dist']
                 else:
+                    # print('no human')
                     edge_cost = np.random.normal(means_no[n1, n2], std_no[n1, n2])
-                    # print('NO | mean: {} | std: {}'.format(means_no[n1, n2], std_no[n1, n2]))
+                    hum_dist = 0
 
-                if edge_cost <= 0:
-                    edge_cost = 0.1
+            # except (TypeError, KeyError) as e:
+            #
+            #     edge_cost = self.fallback(self.hosp_graph[n1][n2])
 
-                self.hosp_graph[n1][n2]['temp_edge_cost'] = edge_cost
-                # print(n1, n2, '{:0.3f}'.format(edge_cost))
+            if edge_cost <= 0:
+                edge_cost = 0.1
 
-            except (TypeError, KeyError) as e:
-                # print('Key error for edge [{}, {}]. Human condition {}'.format(n1, n2, human_on_edge))
-                # Divide the euclidean distance by the top speed of the robot, dampened by 30%
-                if human_on_edge:
-                    self.hosp_graph[n1][n2]['temp_edge_cost'] = self.hosp_graph[n1][n2]['euclidean_dist'] / (0.22 * 0.5 * 0.8)
-                else:
-                    self.hosp_graph[n1][n2]['temp_edge_cost'] = self.hosp_graph[n1][n2]['euclidean_dist'] / (0.22 * 0.8)
+            self.hosp_graph[n1][n2]['temp_edge_cost'] = edge_cost
+            self.hosp_graph[n1][n2]['temp_dist_with_hum'] = hum_dist
 
-                # print('exception reached, {} - {}'.format(n1, n2))
-
-            # print("{} - {} : {} : {}".format(n1, n2, human_on_edge, self.hosp_graph[n1][n2]['temp_edge_cost']))
+    def run_samples(self, curr_node, goal_node):
+        for (n1, n2) in self.hosp_graph.edges():
+            self.set_temp_graph(n1, n2)
 
         new_length, new_path = nx.single_source_dijkstra(self.hosp_graph, curr_node, target=goal_node, weight='temp_edge_cost')
         # print(new_path)
@@ -133,6 +145,103 @@ class SamplingPlannerClass:
     def re_init(self):
         self.paths_dict = {}
         self.current_key = 0
+
+    def run_backward_v2(self, paths, iterations, real_data=False):
+
+        paths_costs = [[] for _ in range(len(paths))]
+        hum_dist_all = [[] for _ in range(len(paths))]
+        # paths_costs = []
+        for _ in range(iterations):
+
+            self.set_temp_graph(real_data)
+
+            for j in range(len(paths)):
+                [_, path] = paths[j]
+                hum_dist = 0
+                # print(path)
+                path_len = 0
+                for i in range(len(path) - 1):
+                    n1 = path[i]
+                    n2 = path[i + 1]
+                    path_len += self.hosp_graph[n1][n2]['temp_edge_cost']
+                    hum_dist += self.hosp_graph[n1][n2]['temp_dist_with_hum']
+
+                paths_costs[j].append(path_len)
+                hum_dist_all[j].append(hum_dist)
+                # paths_costs.append(path_len)
+
+        return paths_costs, hum_dist_all
+
+    def run_backward(self, path, iterations, ignore_hum=False, real_data=False):
+        '''
+        This takes a path as an input and returns the average and standard deviation of the cost of that path over
+        a given number of iterations
+        '''
+
+        path_costs = []
+
+        for _ in range(iterations):
+            path_len = 0
+
+            for i in range(len(path) - 1):
+                n1 = path[i]
+                n2 = path[i + 1]
+                self.set_temp_graph(n1, n2, real_data, ignore_hum)
+                path_len += self.hosp_graph[n1][n2]['temp_edge_cost']
+
+            path_costs.append(path_len)
+
+        return mean(path_costs), stdev(path_costs), min(path_costs), max(path_costs)
+
+    def gaussian_combo(self, paths, hum_cond='all'):
+        low = 0
+        high = 0
+        path_mean = 0
+        var = 0
+        pct_hum = nx.get_edge_attributes(self.hosp_graph, 'pct_hum')
+        means_hum = nx.get_edge_attributes(self.hosp_graph, 'mean_hum')
+        std_hum = nx.get_edge_attributes(self.hosp_graph, 'std_hum')
+        means_no = nx.get_edge_attributes(self.hosp_graph, 'mean_no')
+        std_no = nx.get_edge_attributes(self.hosp_graph, 'std_no')
+        mean_all = nx.get_edge_attributes(self.hosp_graph, 'mean_all')
+        std_all = nx.get_edge_attributes(self.hosp_graph, 'std_all')
+        hum_interval = nx.get_edge_attributes(self.hosp_graph, 'weight_hum')
+        no_interval = nx.get_edge_attributes(self.hosp_graph, 'weight_no')
+
+        [_, path] = paths
+
+        for i in range(len(path) - 1):
+            n1 = path[i]
+            n2 = path[i + 1]
+            try:
+                curr_pct_hum = pct_hum[n1, n2]
+            except KeyError:
+                dummy = n1
+                n1 = n2
+                n2 = dummy
+                curr_pct_hum = pct_hum[n1, n2]
+            # print(n1, n2, means_hum[n1, n2])
+            if hum_cond == "no" or means_hum[n1, n2] is None:
+                # print('no', hum_cond)
+                path_mean += means_no[n1, n2]
+                low += no_interval[n1, n2].low
+                high += no_interval[n1, n2].high
+                var += std_no[n1, n2] ** 2
+            elif hum_cond == 'hum':
+                # print('hum', hum_cond)
+                path_mean += means_hum[n1, n2]
+                low += hum_interval[n1, n2].low
+                high += hum_interval[n1, n2].high
+                var += std_hum[n1, n2] ** 2
+            else:
+                # print('all', hum_cond)
+                path_mean += mean_all[n1, n2]
+                low += min([hum_interval[n1, n2].low, no_interval[n1, n2].low])
+                high += max([hum_interval[n1, n2].high, no_interval[n1, n2].high])
+                var += std_all[n1, n2] ** 2
+
+        std = sqrt(var)
+        return path_mean, std, low, high
 
 
 class DataAccumulated:

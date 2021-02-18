@@ -22,17 +22,20 @@ class AddStats:
             self.min_distance(n1, n2)
             self.clean_data(n1, n2)
             self.add_stats(n1, n2)
+            self.remove_edges(n1, n2)
 
         print("total removed: {} of {}".format(self.tot_start - self.tot_end, self.tot_start))
-        HospGraph.pickle_it(self.hosp_graph, self.file_path + '_plus_stats_clean')
+        # HospGraph.pickle_it(self.hosp_graph, self.file_path + '_plus_stats_clean')
 
     def euclidean_dist(self, n1, n2):
         n1_loc = self.hosp_graph.nodes[n1]['node_loc']
         n2_loc = self.hosp_graph.nodes[n2]['node_loc']
         # print(n1_loc[0].low)
+        # Gets the difference between the centers of each node
         x_diff = ((n1_loc[0].low + n1_loc[0].high) / 2) - ((n2_loc[0].low + n2_loc[0].high) / 2)
         y_diff = ((n1_loc[1].low + n1_loc[1].high) / 2) - ((n2_loc[1].low + n2_loc[1].high) / 2)
         self.hosp_graph[n1][n2]['euclidean_dist'] = sqrt(x_diff ** 2 + y_diff ** 2)
+        self.hosp_graph[n1][n2]['four_connect_dist'] = abs(x_diff) + abs(y_diff)
 
     def min_distance(self, n1, n2):
         [n1_x, n1_y] = self.hosp_graph.nodes[n1]['node_loc']
@@ -60,6 +63,13 @@ class AddStats:
 
         # Need separate blocks because one or the other may not have data
         try:
+            self.hosp_graph[n1][n2]['mean_all'] = statistics.mean(array_no + array_hum)
+            self.hosp_graph[n1][n2]['std_all'] = statistics.stdev(array_no + array_hum)
+        except statistics.StatisticsError:
+            self.hosp_graph[n1][n2]['mean_all'] = None
+            self.hosp_graph[n1][n2]['std_all'] = None
+
+        try:
             self.hosp_graph[n1][n2]['mean_no'] = statistics.mean(array_no)
             self.hosp_graph[n1][n2]['std_no'] = statistics.stdev(array_no)
         except statistics.StatisticsError:
@@ -78,14 +88,15 @@ class AddStats:
         except ZeroDivisionError:
             self.hosp_graph[n1][n2]['pct_hum'] = None
 
+        print('mean_all', self.hosp_graph[n1][n2]['mean_all'])
+
     def clean_data(self, n1, n2):
         print("--------------------")
         print(n1, n2)
         # Theoretically the minimum amount of time it could take to travel between two nodes
         min_val = self.hosp_graph[n1][n2]['min_dist'] / self.top_speed
         # min_val = 0
-        print(min_val)
-        max_val = 200
+        max_val = 300
 
         start_no = len(self.hosp_graph[n1][n2]['trav_data_no'])
         self.tot_start += start_no
@@ -97,14 +108,18 @@ class AddStats:
         if start_no != end_no:
             print("NO, start: {} | end: {}".format(start_no, end_no))
             try:
-                print(min(new_arr))
+                print('min_no', min(new_arr))
             except ValueError:
                 pass
 
         start_hum = len(self.hosp_graph[n1][n2]['trav_data_hum'])
         self.tot_start += start_hum
         new_arr_hum = [i for i in self.hosp_graph[n1][n2]['trav_data_hum'] if min_val <= i <= max_val]
+        dummy_arr_num_max = [j for j in self.hosp_graph[n1][n2]['trav_data_hum'] if j > max_val]
+        if len(dummy_arr_num_max) > 0:
+            print(dummy_arr_num_max)
         self.hosp_graph[n1][n2]['trav_data_hum'] = new_arr_hum
+        self.hosp_graph[n1][n2]['count_nav_fail'] = len(dummy_arr_num_max)
         end_hum = len(self.hosp_graph[n1][n2]['trav_data_hum'])
         self.tot_end += end_hum
 
@@ -112,16 +127,22 @@ class AddStats:
             print("HUM, start: {} | end: {}".format(start_hum, end_hum))
             # print(min(new_arr_hum))
             try:
-                print(min(new_arr_hum))
+                print('min_hum', min(new_arr_hum))
             except ValueError:
                 pass
+
+    def remove_edges(self, n1, n2):
+        if not self.hosp_graph[n1][n2]['mean_all']:
+            self.hosp_graph.remove_edge(n1, n2)
+            print('edge removed between {} and {}'.format(n1, n2))
 
 
 if __name__ == "__main__":
 
     # Yes this is terribly dumb, but you have to write out the full filepath
     # Otherwise it will save to the directory from which you are running the script
-    path_and_name = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_2021-01-25_hum_50_70'
+    path_and_name = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_2021-02-11_hum_50_70'
 
     add_stats_cl = AddStats(path_and_name)
     add_stats_cl.main()
+    print(add_stats_cl.hosp_graph['r01']['r01_d00'])

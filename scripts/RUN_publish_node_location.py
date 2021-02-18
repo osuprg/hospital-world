@@ -42,8 +42,8 @@ class RobotNodeInfo:
         #                          [0.2, 0.75]]  # Humans present 20% of the time, speed at 75% normal
 
         self.human_conditions = [[0.0, 1.0],  # Humans present 0% of the time; speed at 100% normal
-                                 [0.0, 1.0],
-                                 [0.5, 0.70]]  # Humans present 50% of the time, speed at 70% normal
+                                 [0.4, 0.75],  # Humans present 40% of the time, speed at 75% normal
+                                 [0.8, 0.50]]  # Humans present 80% of the time, speed at 50% normal
 
         # Boolean for whether or not humans are present in the current node
         self.human_status = None

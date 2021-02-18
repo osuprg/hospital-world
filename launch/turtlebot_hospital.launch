@@ -11,8 +11,8 @@
 
   <!--  REMOVE THESE!!! -->
 <!--  <param name="global_planner_choice" value="sampling" />-->
-<!--  <param name="graph_file_path" value="$(find hospital-world)/pickles/STRUCT_hospital_v1_param_pickle_2021-01-25"/>-->
-  <param name="graph_file_path" value="$(find hospital-world)/pickles/hospital_trials_2021-01-26_hum_50_70"/>
+  <param name="graph_file_path" value="$(find hospital-world)/pickles/STRUCT_hospital_v1_param_pickle_2021-01-25"/>
+<!--  <param name="graph_file_path" value="$(find hospital-world)/pickles/hospital_trials_2021-01-26_hum_50_70"/>-->
 
   <param name="global_planner_choice" value="move_base" />
 
