@@ -1,7 +1,5 @@
 # Task-dependent contextual planning 
 
-[**Github link**](https://github.com/osuprg/hospital-world)
-
 ## Basics:
 
 The purpose of this package is to provide a custom global planner that can account for both the dynamics of the environment and the urgency of the task at hand. 
