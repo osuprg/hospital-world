@@ -15,18 +15,25 @@ class SimGraph:
     def add_edge_weights(self):
         for (n1, n2) in self.G.edges():
             range_num = 0
-            for (low, high) in self.ranges_list:
+            for i in range(len(self.ranges_list)):
+                (low, high) = self.ranges_list[i]
                 # Add two float values in each range to each edge. Can be used as floats or means for GMM
                 float_num_00 = 'fl00_' + '%02d' % range_num
                 float_num_01 = 'fl01_' + '%02d' % range_num
                 self.G[n1][n2][float_num_00] = uniform(low, high)
                 self.G[n1][n2][float_num_01] = uniform(low, high)
 
-                # Add two float values in each range to each edge. Can be used as floats or standard devs for GMM
                 std_num_00 = 'std00_' + '%02d' % range_num
                 std_num_01 = 'std01_' + '%02d' % range_num
-                self.G[n1][n2][std_num_00] = uniform(low, high)
-                self.G[n1][n2][std_num_01] = uniform(low, high)
+                if i == 0:
+                    # Add two float values in each range to each edge. Can be used as floats or standard devs for GMM
+                    self.G[n1][n2][std_num_00] = uniform(low, high)
+                    self.G[n1][n2][std_num_01] = uniform(low, high)
+                else:
+                    low = 1
+                    high = 15
+                    self.G[n1][n2][std_num_00] = uniform(low, high)
+                    self.G[n1][n2][std_num_01] = uniform(low, high)
 
                 range_num += 1
 
