@@ -10,14 +10,14 @@ import numpy as np
 from math import sqrt
 
 
-def path_gmm_distros(t_graph, path, range_num):
+def path_gmm_distros(tst_graph, path, range_num):
     """
     Takes in a NetworkX graph and a path
     Provides a GMM distributions for the given attribute set for that path
     """
 
-    # attr_list = list(list(t_graph.G.edges(data=True))[0][-1].keys())
-    # num_ranges = len(t_graph.ranges_list)
+    # attr_list = list(list(tst_graph.G.edges(data=True))[0][-1].keys())
+    # num_ranges = len(tst_graph.ranges_list)
 
     float_num_00 = 'fl00_' + '%02d' % range_num
     float_num_01 = 'fl01_' + '%02d' % range_num
@@ -33,10 +33,10 @@ def path_gmm_distros(t_graph, path, range_num):
             n1 = path[i]
             n2 = path[i + 1]
 
-            gmm_mean_00 = t_graph.G[n1][n2][float_num_00]
-            gmm_mean_01 = t_graph.G[n1][n2][float_num_01]
-            gmm_std_00 = t_graph.G[n1][n2][std_num_00]
-            gmm_std_01 = t_graph.G[n1][n2][std_num_01]
+            gmm_mean_00 = tst_graph.G[n1][n2][float_num_00]
+            gmm_mean_01 = tst_graph.G[n1][n2][float_num_01]
+            gmm_std_00 = tst_graph.G[n1][n2][std_num_00]
+            gmm_std_01 = tst_graph.G[n1][n2][std_num_01]
 
             if random() < 0.5:
                 path_time += gauss(gmm_mean_00, gmm_std_00)
