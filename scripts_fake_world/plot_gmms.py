@@ -5,6 +5,7 @@ from sklearn import mixture
 from random import random, gauss
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.stats import norm
 
 
 def sample_data(gmm_list):
@@ -17,6 +18,17 @@ def sample_data(gmm_list):
                 break
 
     return samples
+
+
+def plot_mult_gauss(models, name=None):
+    # x-axis ranges from -5 and 5 with .001 steps
+    x = np.arange(50, 400, 10)
+    for [mean, std, _, _] in models:
+        # define multiple normal distributions
+        plt.plot(x, norm.pdf(x, mean, std))
+
+    plt.title('Brute Force Addition of GMMs')
+    plt.savefig('bruteForceGMM')
 
 
 def plot_it(gmm_list, name=None):
