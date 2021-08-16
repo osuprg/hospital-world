@@ -31,9 +31,9 @@ class ManipulateDF:
         self.df = df
 
     def manipulate_df(self):
-        # single_val = ['humDist', 'fourConnDist', 'gausMean', 'gausStd']
-        # for val in single_val:
-        #     self.add_scaled_val(val)
+        single_val = ['humDist', 'fourConnDist', 'gausMean', 'gausStd']
+        for val in single_val:
+            self.add_scaled_val(val)
 
         self.mess_with_gmm()
 
@@ -88,8 +88,8 @@ class ManipulateDF:
 
 if __name__ == "__main__":
 
-    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_2021-02-11_hum_50_70_plus_stats_clean'
-    path_to_paths_file = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/paths_generated_2021-02-11_clean_run_01'
+    path_to_pickle = '/home/anna/workspaces/research_ws/src/hospital_world/pickles/hospital_trials_2021-02-11_hum_50_70_plus_stats_clean'
+    # path_to_paths_file = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/paths_generated_2021-02-11_clean_run_01'
     hosp_graph = HospGraph.unpickle_it(path_to_pickle)
     sampling_planner = Samp.SamplingPlannerClass(hosp_graph)
 
