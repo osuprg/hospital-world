@@ -100,6 +100,7 @@ class RobotNodeInfo:
                 print('###########################')
                 print(self.plan)
                 print('###########################')
+                self.set_next_node()
 
         # Catches the error from the first iteration where there is no prior plan
         # Yes, this is lazy. But I tried it a different way and it was way messier.
@@ -146,52 +147,55 @@ class RobotNodeInfo:
 
         # If we have reached a new node
         if self.prior_node_msg != self.current_node_msg:
-
-            # Update current node
             self.current_node_index += 1
-            self.current_node_q = self.plan[self.current_node_index]
+            self.set_next_node()
 
-            # Update next node, unless it's the end of the list
-            try:
-                self.next_node_q = self.plan[self.current_node_index + 1]
-            except IndexError:
-                # End of the list
-                self.next_node_q = None
+    def set_next_node(self):
 
-            # If the message and current node in the list are not the same, correct it
-            if self.current_node_msg != self.current_node_q:
-                print("Current node message and queue are not the same")
-                index = self.find_in_list()
-                # print('index of current node in list', index)
-                if index is not None:
-                    self.current_node_q = self.plan[index]
-                    try:
-                        self.next_node_q = self.plan[index + 1]
-                        self.current_node_index = index
-                    except IndexError:
-                        self.next_node_q = None
-                    print('fixed q to match msg', self.current_node_msg, self.current_node_q)
-                else:
-                    rospy.loginfo("Current node is not in the plan")
-                    self.current_node_q = None
+        # Update current node
+        self.current_node_q = self.plan[self.current_node_index]
 
-            # If there is something to record
-            if self.current_node_q and self.next_node_q:
-                # Check to make sure there is an edge between them
-                if not self.current_node_q in self.hosp_graph.neighbors(self.next_node_q):
-                    print("{} and {} are not connected".format(self.current_node_q, self.next_node_q))
-                    rospy.loginfo("{} and {} are not connected".format(str(self.current_node_q), str(self.next_node_q)))
-                    self.node_pub.publish("Do not record")
-                # If there is, then find the human condition, set the velocity, and publish the node info
-                else:
-                    self.human_or_no()
-                    self.set_robot_vel()
-                    rospy.loginfo(str(self.current_node_q) + ", " + str(self.next_node_q) + ", " + self.human_status)
-                    self.node_pub.publish(
-                        str(self.current_node_q) + ", " + str(self.next_node_q) + ", " + self.human_status)
+        # Update next node, unless it's the end of the list
+        try:
+            self.next_node_q = self.plan[self.current_node_index + 1]
+        except IndexError:
+            # End of the list
+            self.next_node_q = None
+
+        # If the message and current node in the list are not the same, correct it
+        if self.current_node_msg != self.current_node_q:
+            print("Current node message and queue are not the same")
+            index = self.find_in_list()
+            # print('index of current node in list', index)
+            if index is not None:
+                self.current_node_q = self.plan[index]
+                try:
+                    self.next_node_q = self.plan[index + 1]
+                    self.current_node_index = index
+                except IndexError:
+                    self.next_node_q = None
+                print('fixed q to match msg', self.current_node_msg, self.current_node_q)
             else:
-                rospy.loginfo('No current or next node')
-                self.node_pub.publish('Do not record')
+                rospy.loginfo("Current node is not in the plan")
+                self.current_node_q = None
+
+        # If there is something to record
+        if self.current_node_q and self.next_node_q:
+            # Check to make sure there is an edge between them
+            if not self.current_node_q in self.hosp_graph.neighbors(self.next_node_q):
+                print("{} and {} are not connected".format(self.current_node_q, self.next_node_q))
+                rospy.loginfo("{} and {} are not connected".format(str(self.current_node_q), str(self.next_node_q)))
+                self.node_pub.publish("Do not record")
+            # If there is, then find the human condition, set the velocity, and publish the node info
+            else:
+                self.human_or_no()
+                self.set_robot_vel()
+                rospy.loginfo(str(self.current_node_q) + ", " + str(self.next_node_q) + ", " + self.human_status)
+                self.node_pub.publish(
+                    str(self.current_node_q) + ", " + str(self.next_node_q) + ", " + self.human_status)
+        else:
+            rospy.loginfo('No current or next node')
+            self.node_pub.publish('Do not record')
 
     def human_or_no(self):
         self.condition = int(self.hosp_graph[self.current_node_q][self.next_node_q]['hum_cond'])

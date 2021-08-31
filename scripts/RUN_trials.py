@@ -257,6 +257,54 @@ class MoveRobotAround:
 
         print("done!")
 
+    def path_orientation(self, node):
+        x_mid = (self.hosp_graph.nodes[node]['node_loc'][0].low +
+                 self.hosp_graph.nodes[node]['node_loc'][0].high) / 2
+        y_mid = (self.hosp_graph.nodes[node]['node_loc'][1].low +
+                 self.hosp_graph.nodes[node]['node_loc'][1].high) / 2
+        next_goal = (x_mid, y_mid)
+
+    def collect_path_data(self, path):
+        iter = 0
+        tot_iter = 1000
+
+        try:
+            while iter < tot_iter and not rospy.is_shutdown():
+                print("##############")
+                print("Iteration {}".format(iter))
+                rospy.loginfo('Iteration {}'.format(iter))
+                print("##############")
+
+                if self.global_planner == "move_base":
+                    rospy.loginfo('running standard move_base')
+                    self.select_new_goal()
+                    result = self.movebase_client()
+                elif self.global_planner == "sampling":
+                    rospy.loginfo('running sampling based global planner')
+                    result = self.use_custom_planner()
+
+                if result:
+
+                    if result != 3:
+                        self.result_from_path = result
+                        redo = True
+                        iteration += 1
+                        rospy.loginfo("Robot did not execute proper path")
+
+                    else:
+                        redo = False
+                        iteration += 1
+                        rospy.loginfo("Arrived at: {}".format(self.current_position))
+                        rospy.loginfo("Goal execution done!")
+
+                else:
+                    # For when something goes terribly wrong
+                    rospy.loginfo("Something has gone terribly wrong")
+                    break
+
+        except rospy.ROSInterruptException:
+            rospy.loginfo("Navigation test finished.")
+            exit()
 
 if __name__ == '__main__':
     rospy.init_node('run_trials_py')
@@ -275,7 +323,7 @@ if __name__ == '__main__':
     # This is here so we don't try to run trials before getting a message from AMCL
     rospy.sleep(1)
 
-    rowboat_robot.run_trials()
+    # rowboat_robot.run_trials()
 
     # Ugh.
     # This was here from before I added in action server stuff and was writing the subscribers.

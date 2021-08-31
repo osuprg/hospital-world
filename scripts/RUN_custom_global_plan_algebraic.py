@@ -68,6 +68,7 @@ def hum_95_percentile(n1, n2, dict):
     else:
         return fallback(dict)
 
+
 def no_hum_95_percentile(n1, n2, dict):
     pct_hum = dict['pct_hum']
     mean_hum = dict['mean_hum']
@@ -80,12 +81,14 @@ def no_hum_95_percentile(n1, n2, dict):
     else:
         return fallback(dict)
 
+
 def mean_no_hum(n1, n2, dict):
     mean_no = dict['mean_no']
     if mean_no:
         return mean_no
     else:
         return fallback(dict)
+
 
 def std_and_hum(n1, n2, dict):
     pct_hum = dict['pct_hum']
@@ -97,10 +100,12 @@ def std_and_hum(n1, n2, dict):
     else:
         return std_no
 
+
 def four_conn_hum(n1, n2, dict):
-    four_conn = dict['four_connect_dist']
+    four_conn = dict['sq_dist']
     pct_hum = dict['pct_hum']
     return four_conn * pct_hum
+
 
 def num_doors(n1, n2, dict):
     cost = 0
@@ -110,6 +115,53 @@ def num_doors(n1, n2, dict):
         cost += 0.5
 
     return cost
+
+
+def doors_and_hum(n1, n2, dict):
+    pct_hum = dict['pct_hum']
+    sq_dist = dict['sq_dist']
+    cost = 0
+    cost += 5 * (num_doors(n1, n2, dict))
+    cost += 10 * sq_dist * pct_hum
+
+    return cost
+
+def see_hum(n1, n2, dict):
+    return (1 - dict['pct_hum']) * dict['sq_dist']
+
+
+def variablility_5_45_1(n1, n2, dict):
+    pct_hum = dict['pct_hum']
+    sq_dist = dict['sq_dist']
+    nav_fail = dict['nav_fail']
+
+    total_cost = 5 * (sq_dist * pct_hum) \
+                 + 45 * num_doors(n1, n2, dict) \
+                 + nav_fail
+    # print(n1, n2, tot_cost, self.w_mean, mean_all, self.w_std_all,  std_all, self.w_errors, num_err)
+    return total_cost
+
+def variablility_25_25_1000(n1, n2, dict):
+    pct_hum = dict['pct_hum']
+    sq_dist = dict['sq_dist']
+    nav_fail = dict['nav_fail']
+
+    total_cost = 25 * (sq_dist * pct_hum) \
+                 + 25 * num_doors(n1, n2, dict) \
+                 + 1000 * nav_fail
+    # print(n1, n2, tot_cost, self.w_mean, mean_all, self.w_std_all,  std_all, self.w_errors, num_err)
+    return total_cost
+
+def variablility_45_5_1(n1, n2, dict):
+    pct_hum = dict['pct_hum']
+    sq_dist = dict['sq_dist']
+    nav_fail = dict['nav_fail']
+
+    total_cost = 45 * (sq_dist * pct_hum) \
+                 + 5 * num_doors(n1, n2, dict) \
+                 + nav_fail
+    # print(n1, n2, tot_cost, self.w_mean, mean_all, self.w_std_all,  std_all, self.w_errors, num_err)
+    return total_cost
 
 
 if __name__ == '__main__':
@@ -128,6 +180,6 @@ if __name__ == '__main__':
     # for (n1, n2) in hosp_graph.edges():
     #     print(std_and_hum(n1, n2, hosp_graph[n1][n2]))
         # print(mean_no_hum(n1, n2, hosp_graph[n1][n2]))
-    print(dijkstra_path(hosp_graph, 'r00', 'r08', weight=std_and_hum))
+    print(dijkstra_path(hosp_graph, 'r00', 'r08', weight=std_and_hum ))
     # print(dijkstra_path(hosp_graph, 'r00', 'r08', weight=mean_one_gaussian))
     # print(dijkstra_path(hosp_graph, 'r00', 'r08', weight=weighted_95_percentile))

@@ -36,20 +36,26 @@ class CompareMethods:
     def __init__(self, hosp_graph, iterations):
 
         # Define all the weight functions you want to use.
-        self.four_conn = MethodDef('square_dist', 'four_connect_dist')
+        self.four_conn = MethodDef('square_dist', 'sq_dist')
         self.alg_means_hum = MethodDef('means', Alg.mean_one_gaussian)
         self.alg_95_pct_combo = MethodDef('95_pct_mix', Alg.weighted_95_percentile)
         self.alg_std_hum = MethodDef('std_and_hum', Alg.std_and_hum)
         self.alg_95_pct_hum = MethodDef('95_pct_hum', Alg.hum_95_percentile)
         self.alg_doors = MethodDef('num_doors', Alg.num_doors)
         self.alg_four_conn_hum = MethodDef('four_conn_hum', Alg.four_conn_hum)
-        self.four_conn_no = MethodDef('square_dist_no', 'four_connect_dist', ignore_hum=True)
+        self.four_conn_no = MethodDef('square_dist_no', 'sq_dist', ignore_hum=True)
         self.alg_95_pct_no = MethodDef('95_pct_no_hum', Alg.no_hum_95_percentile, ignore_hum=True)
         self.alg_mean_no = MethodDef('mean_no_hum', Alg.mean_no_hum, ignore_hum=True)
+        self.alg_doors_and_hum = MethodDef('doors_hum', Alg.doors_and_hum)
+        self.alg_see_hum = MethodDef('see_hum', Alg.see_hum)
+        self.alg_var_1 = MethodDef('var1', Alg.variablility_5_45_1)
+        self.alg_var_2 = MethodDef('var2', Alg.variablility_25_25_1000)
+        self.alg_var_3 = MethodDef('var3', Alg.variablility_45_5_1)
 
         # self.methods_no = [self.four_conn_no, self.alg_mean_no, self.alg_95_pct_no]
         self.methods = [self.four_conn, self.alg_means_hum, self.alg_mean_no, self.alg_95_pct_hum, self.alg_95_pct_no,
-                        self.alg_95_pct_combo, self.alg_std_hum, self.alg_doors, self.alg_four_conn_hum]
+                        self.alg_95_pct_combo, self.alg_std_hum, self.alg_doors, self.alg_doors_and_hum,
+                        self.alg_four_conn_hum, self.alg_see_hum, self.alg_var_1, self.alg_var_2, self.alg_var_3]
 
         self.iterations = iterations
 
@@ -57,24 +63,32 @@ class CompareMethods:
         # This will be a dictionary of dictionaries. Because the first rule of optimization club is don't optimize.
         self.df = pd.DataFrame({'path': [], 'methods': [], 'pathName': [], 'methodNames': [],
                                    'sampleData': [], 'gmmFit': [],
-                                   'humDist': [], 'fourConnDist': [],
+                                   'humDist': [], 'fourConnDist': [], 'doors': [],
                                    'gausMean': [], 'gausStd': [],
-                                   'gmmData': []})
+                                   'gmmData': [], 'navFail':[]})
 
         self.sampling_planner = Samp.SamplingPlannerClass(self.hosp_graph)
 
     def main_loop(self, n1, n2, compare_methods=False, compare_paths=True):
+        # Re-initialize dataframe
+        self.df = pd.DataFrame({'path': [], 'methods': [], 'pathName': [], 'methodNames': [],
+                                   'sampleData': [], 'gmmFit': [],
+                                   'humDist': [], 'fourConnDist': [], 'doors': [],
+                                   'gausMean': [], 'gausStd': [],
+                                   'gmmData': [], 'navFail': []})
 
         print('--------- {} to {} ---------'.format(n1, n2))
 
         paths = []
         # print("{}".format(self.all_methods_names[i]))
 
+        # Get a set of reasonable paths
         for method in self.methods:
             if method.custom:
                 path = method.function(n1, n2)
             else:
                 path = nx.dijkstra_path(self.hosp_graph, n1, n2, weight=method.function)
+                # print(method.name, path)
 
             method.paths.append(path)
             paths.append([method, path])
@@ -82,13 +96,18 @@ class CompareMethods:
             if compare_methods:
                 self.compare_methods(path, method)
 
+        # If we're comparing the paths
         if compare_paths:
+            # Get the set of unique paths
             unique_paths = self.unique_paths(paths)
+            # If there is more than one unique path
             if len(unique_paths) > 1:
+                # Compare them
                 self.compare_paths_v2(unique_paths)
+                return True
             else:
                 print(unique_paths[0][1])
-
+                return False
 
     def unique_paths(self, paths):
         # Load the return paths array with the first path in the paths array
@@ -97,6 +116,7 @@ class CompareMethods:
 
         # Loop through the paths array
         for i in range(len(paths)):
+            # print(paths[i][1])
             in_list = False
             # We can skip the first path since we already added it
             if i == 0:
@@ -128,18 +148,25 @@ class CompareMethods:
         # For each path, fit a GMM
         for i in range(len(paths)):
             [methods, path] = paths[i]
-            names = ''
+            names = []
             path_len = 0
             for method in methods:
-                names += str(method.name) + ','
+                names.append(method)
 
             path_name = ''
+            path_door_ct = 0
+            nav_fail = 0
             for j in range(len(path)):
                 path_name += str(path[j]) + ", "
                 if j < len(path) - 1:
                     n1 = path[j]
                     n2 = path[j + 1]
-                    path_len += self.hosp_graph[n1][n2]['four_connect_dist']
+                    path_len += self.hosp_graph[n1][n2]['sq_dist']
+                    nav_fail += self.hosp_graph[n1][n2]['nav_fail']
+                    if 'd' in n1:
+                        path_door_ct += 0.5
+                    if 'd' in n2:
+                        path_door_ct += 0.5
 
             path_lens.append(path_len)
             gmm_fit = self.try_GMM(costs_gaus[i])
@@ -151,9 +178,9 @@ class CompareMethods:
             this_key = 'key' + str(i)
             self.df = self.df.append({'path': path, 'methods': methods, 'pathName': path_name, 'methodNames': names,
                                    'sampleData': costs_gaus[i], 'gmmFit': gmm_fit,
-                                   'humDist': mean(hum_dist[i]), 'fourConnDist': path_len,
+                                   'humDist': mean(hum_dist[i]), 'fourConnDist': path_len, 'doors': path_door_ct,
                                    'gausMean': mean(costs_gaus[i]), 'gausStd': stdev(costs_gaus[i]),
-                                   'gmmData': gmm_data}, ignore_index=True)
+                                   'gmmData': gmm_data, 'navFail': nav_fail}, ignore_index=True)
 
             # print(names)
             # print(path_name)
@@ -182,7 +209,7 @@ class CompareMethods:
             path_avg_gaus, path_std_gaus, low_gaus, high_gaus = self.sampling_planner.gaussian_combo(path, methods[0].ignore_hum)
             names_str = ''
             for i in range(len(methods)):
-                names_str += methods[i].name + ', '
+                names_str += methods[i] + ', '
 
             print('{:45} {}'.format(names_str, path))
 

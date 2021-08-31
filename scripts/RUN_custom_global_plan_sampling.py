@@ -71,7 +71,7 @@ class SamplingPlannerClass:
                 if human_on_edge:
                     # print('human')
                     edge_cost = np.random.normal(means_hum[n1, n2], std_hum[n1, n2])
-                    hum_dist = self.hosp_graph[n1][n2]['four_connect_dist']
+                    hum_dist = self.hosp_graph[n1][n2]['sq_dist']
                 else:
                     # print('no human')
                     edge_cost = np.random.normal(means_no[n1, n2], std_no[n1, n2])
@@ -169,7 +169,6 @@ class SamplingPlannerClass:
                 paths_costs[j].append(path_len)
                 hum_dist_all[j].append(hum_dist)
                 # paths_costs.append(path_len)
-
         return paths_costs, hum_dist_all
 
     def run_backward(self, path, iterations, ignore_hum=False, real_data=False):
