@@ -42,5 +42,5 @@ plt.plot(x_vals, my_data_avg, 'b', label='MCMC')
 plt.xlabel('Number of edges')
 plt.ylabel('Run time (sec)')
 plt.legend()
-plt.savefig('time-comparison-mcmc-convolution.svg')
+plt.savefig('time-comparison-mcmc-convolution.png')
 
