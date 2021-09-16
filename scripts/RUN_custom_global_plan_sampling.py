@@ -1,21 +1,12 @@
 #!/usr/bin/env python3
 
-# ROS things
-# import rospy
-
 # Python things
-from time import time
 import networkx as nx
 from random import random, randint, sample, choice
 import numpy as np
 from statistics import mean, stdev, StatisticsError
 import pickle
 from math import sqrt
-
-# Custom things
-import STRUCT_hospital_graph_class as HospGraph
-import RUN_custom_global_plan_algebraic as Alg
-
 
 
 class SamplingPlannerClass:

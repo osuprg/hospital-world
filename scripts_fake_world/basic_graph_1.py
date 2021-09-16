@@ -3,10 +3,8 @@
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
 import matplotlib.pyplot as plt
-import numpy as np
 from random import uniform
-import pickle
-from datetime import date
+
 
 class Graph1:
     def __init__(self, num_nodes, edge_links):

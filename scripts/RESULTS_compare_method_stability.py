@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import STRUCT_hospital_graph_class as HospGraph
 import RUN_custom_global_plan_sampling as Samp
 import POST_compare_choice_methods as Choices
-import cow_goes_MOO as myMOO
+from scripts_simplified_algorithm import cow_goes_MOO as myMOO
 import pickle
 
 class FunctionDefs:

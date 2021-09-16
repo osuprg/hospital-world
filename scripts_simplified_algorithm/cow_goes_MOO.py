@@ -1,23 +1,12 @@
 #!/usr/bin/env python3
 
 # Python things
-from time import time
-import networkx as nx
-from random import random, randint, sample
-import numpy as np
 import pandas as pd
-from statistics import mean, stdev, StatisticsError
-import pickle
-from math import sqrt
-from sklearn import mixture
 
 # Custom things
-import POST_compare_choice_methods as Choices
-import STRUCT_hospital_graph_class as HospGraph
-import RUN_custom_global_plan_algebraic as Alg
-import RUN_custom_global_plan_sampling as Samp
-import RUN_custom_global_plan_all_paths as All
-import POST_plot_stacked_gaussians as PltGaus
+import compare_paths as Choices
+import fake_hospital_graph as HospGraph
+import sampling_planner as Samp
 
 
 class ManipulateDF:
@@ -57,10 +46,6 @@ class ManipulateDF:
 
         val_min_scaled = val + 'ScaledMin'
         val_max_scaled = val + 'ScaledMax'
-
-        # print('#######################3')
-        # print(self.df[val])
-
         new_arr = []
         for x in self.df[val]:
             if x <= 0:
@@ -120,7 +105,6 @@ class ManipulateDF:
 
         for k, row in self.df.iterrows():
             gmm_num = 0
-            # print(index, row)
 
             for [mean, std, weight] in self.df['gmmData'][k]:
                 gmm_mean = 'gmmMean' + str(gmm_num)
@@ -149,37 +133,17 @@ class ManipulateDF:
 
     def get_dominant_path(self, votes_arr):
         self.df['votes'] = 0
-        # print(votes_arr)
-        for [cost, minmax, votes] in votes_arr:
+        for [cost, minmax] in votes_arr: # votes
             cost_name = cost + 'Scaled' + minmax
-            # print(cost_name, votes)
-            # print(self.df[cost])
-            # print(self.df[cost_name])
-            self.df['votes'] += self.df[cost_name] * votes
-            # print(self.df[cost_name] * votes)
-
+            self.df['votes'] += self.df[cost_name]  # * votes
         winner_i = self.df['votes'].idxmax()
         winner_path = self.df['pathName'][winner_i]
-        # try:
-        #     print('votes, {}, {}, path'.format(votes_arr[0][0], votes_arr[1][0]), votes_arr[2][0])
-        # except IndexError:
-        #     print('votes, {}, {}, path'.format(votes_arr[0][0], votes_arr[1][0]))
-        # for i, _ in self.df.iterrows():
-        #     try:
-        #         print("{:.2f}, {:.2f}, {:.2f}, {:.2f} [{}]".format(self.df['votes'][i], self.df[votes_arr[0][0]][i], self.df[votes_arr[1][0]][i], self.df[votes_arr[2][0]][i], self.df['pathName'][i]))
-        #     except IndexError:
-        #         print("{:.2f}, {:.2f}, {:.2f} [{}]".format(self.df['votes'][i], self.df[votes_arr[0][0]][i], self.df[votes_arr[1][0]][i], self.df['pathName'][i]))
-
-        # print("winning method(s):", self.df['methodNames'][winner_i])
-        # print("winning path:", winner_path)
-        # print('----------')
-        #
         return winner_path
 
 
 if __name__ == "__main__":
 
-    path_to_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_2021-02-11_hum_50_70_plus_stats_clean'
+    path_to_pickle = '/pickles/hospital_trials_2021-02-11_hum_50_70_plus_stats_clean'
     path_to_paths_file = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/paths_generated_2021-02-11_clean_run_01'
     hosp_graph = HospGraph.unpickle_it(path_to_pickle)
     sampling_planner = Samp.SamplingPlannerClass(hosp_graph)
@@ -211,9 +175,6 @@ if __name__ == "__main__":
             n1 = 'r' + "{:02d}".format(rm1)
             n2 = 'r' + "{:02d}".format(rm2)
 
-            # n1 = 'r00'
-            # n2 = 'r08'
-
             mult_paths = compare.main_loop(n1, n2)
             manipulate.df = compare.df
             num_compare = 0
@@ -224,7 +185,7 @@ if __name__ == "__main__":
 
                 for i in range(len(methods)):
                     method = methods[i]
-                    print(goals[i])
+                    # print(goals[i])
                     manipulate.get_dominant_path(method)
 
                 num_compare += 1

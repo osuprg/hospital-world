@@ -1,18 +1,13 @@
 #!/usr/bin/env python3
 
 import STRUCT_hospital_graph_class as HospGraph
-from networkx import dijkstra_path, single_source_dijkstra
 from networkx.algorithms.simple_paths import shortest_simple_paths
 from itertools import islice
 import RUN_custom_global_plan_sampling as Samp
 import POST_compare_choice_methods as Choices
 import numpy as np
-from math import sqrt
 from sklearn import mixture
-from cow_goes_MOO import ManipulateDF
-import operator
-from time import time
-
+from scripts_simplified_algorithm.cow_goes_MOO import ManipulateDF
 
 path_and_name = '/home/anna/workspaces/research_ws/src/hospital_world/pickles/hospital_trials_2021-01-15_plus_stats_clean'
 

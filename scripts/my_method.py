@@ -2,19 +2,16 @@
 
 # Python things
 import networkx as nx
-import numpy as np
 import pandas as pd
-from statistics import mean
-import matplotlib.pyplot as plt
 
 # Custom things
 import STRUCT_hospital_graph_class as HospGraph
 import RUN_custom_global_plan_sampling as Samp
 import POST_compare_choice_methods as Choices
-import cow_goes_MOO as myMOO
+from scripts_simplified_algorithm import cow_goes_MOO as myMOO
 import pickle
 
-class FunctionDefs:
+class DijkstraMethod:
     """
     Dijkstra can accept function calls as a weight. From documentation:
     If this is a function, the weight of an edge is the value returned by the function.
@@ -56,14 +53,14 @@ if __name__ == '__main__':
     sample_size = 1000
 
     hosp_graph = HospGraph.unpickle_it(hosp_graph_pickle)
-    fun_defs = FunctionDefs()
+    fun_defs = DijkstraMethod()
     sampling_planner = Samp.SamplingPlannerClass(hosp_graph)
     compare = Choices.CompareMethods(hosp_graph, iterations)
     manipulate = myMOO.ManipulateDF()
 
-    path_vals = ['mean_all', 'std_all', 'mean_no', 'std_no', 'pct_hum', 'sq_dist', 'doors', 'nav_fail']
     moo_vals = ['gausMean', 'gausStd', 'gmmMean0', 'gmmSTD0', 'gmmUpper0', 'gmmLower0', 'gmmMean1', 'gmmSTD1','gmmUpper1', 'gmmLower1', 'humDist', 'fourConnDist', 'doors', 'navFail']
-
+    path_vals = ['mean_all', 'std_all', 'mean_no', 'std_no', 'pct_hum', 'sq_dist', 'doors', 'nav_fail']
+    weight_options = [1, 5, 10, 100, 1000]
     means_arr = [['gmmUpper1', 'Min', 10], ['gausMean', 'Min', 5], ['navFail', 'Min', 1]]
     min_hum_arr = [['humDist', 'Min', 10], ['doors', 'Min', 2]]  #, ['navFail', 'Min', 1]]
     max_hum_arr = [['humDist', 'Max', 10], ['fourConnDist', 'Min', 10]]
@@ -76,8 +73,6 @@ if __name__ == '__main__':
     all_ratios = []
     w1 = 1
     w2 = 1
-
-    weight_options = [1, 5, 10, 100, 1000]
 
     # Get all ratio pairs
     for rat in reversed(weight_options):
