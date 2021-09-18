@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 class SimGraph:
-    def __init__(self, edge_list):
+    def __init__(self, edge_list, num_nodes, loop_by):
         self.G = nx.Graph()
         self.G.add_edges_from(edge_list)
         self.edge_length_range = [2, 10]  # meters
@@ -19,6 +19,8 @@ class SimGraph:
         self.gauss_range = [0.9, 1.1]
         self.edge_conditions = [[1.0, 1.0], [0.4, 0.75], [0.8, 0.5]]
         self.prob_nav_fail = 0.05
+        self.num_nodes = num_nodes
+        self.loop_by = loop_by
         self.add_edge_weights()
 
     def gauss_noise(self):
@@ -28,12 +30,18 @@ class SimGraph:
     def add_edge_weights(self):
         for (n1, n2) in self.G.edges():
             # Determine edge length
-            self.G[n1][n2]['euclidean_dist'] = uniform(self.edge_length_range[0], self.edge_length_range[1])
+            self.G[n1][n2]['euclidean_dist'] = 5
             self.G[n1][n2]['sq_dist'] = self.G[n1][n2]['euclidean_dist']
 
             # Determine edge condition
             edge_condition = randint(0, 2)
             self.G[n1][n2]['edge_cond'] = edge_condition
+            if edge_condition == 0:
+                self.G[n1][n2]['color'] = 'black'
+            elif edge_condition == 1:
+                self.G[n1][n2]['color'] = 'darkgoldenrod'
+            elif edge_condition == 2:
+                self.G[n1][n2]['color'] = 'darkviolet'
 
             # Determine lower Gaussian mean - square distance divided by the average speed with uniform noise
             mean_no = self.G[n1][n2]['sq_dist'] / (self.robot_avg_speed * self.gauss_noise())
@@ -81,9 +89,10 @@ class SimGraph:
     def plot_graph(self):
         # Plot the graph
         pos = graphviz_layout(self.G, prog='dot')
-        nx.draw_networkx(self.G, pos, with_labels=True)
+        colors = nx.get_edge_attributes(self.G, 'color').values()
+        nx.draw_networkx(self.G, pos, edge_color=colors, width=3, with_labels=True)
 
-        plt.show()
+        plt.savefig('fakeHospGraph_{}nodes_{}.svg'.format(self.num_nodes, self.loop_by))
 
 
 
@@ -122,13 +131,16 @@ def create_edge_list(num_edges, loop_every):
 if __name__ == "__main__":
     # e_list = [(0, 1), (0, 2), (1, 3), (2, 3)]
 
-    num_nodes = 100
-    loop = 10
-    edge_list = create_edge_list(num_nodes, loop)
-    test_graph = SimGraph(edge_list)
-    test_graph.plot_graph()
+    nodes_options = [[49, 7], [56, 7], [63, 7], [64, 8], [72, 8], [81, 9], [90, 9], [99, 9],
+                     [100, 10], [110, 10], [121, 11], [130, 10], [140, 10], [150, 10]]
+    # num_nodes = 42
+    # loop = 7
+    for [num_nodes, loop] in nodes_options:
+        edge_list = create_edge_list(num_nodes, loop)
+        test_graph = SimGraph(edge_list, num_nodes, loop)
+        test_graph.plot_graph()
 
-    pickle_it(test_graph.G, 'fake_hospital_graph_{}_nodes'.format(num_nodes))
+        pickle_it(test_graph.G, 'fake_hospital_graph_{}_nodes'.format(num_nodes))
     #
     # for (n1, n2) in test_graph.G.edges():
     #     print(test_graph.G[n1][n2])

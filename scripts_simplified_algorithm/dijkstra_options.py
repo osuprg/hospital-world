@@ -40,7 +40,7 @@ class DijkstraMethod:
 
     def janky_dijkstra(self, node1, node2):
         all_dij_paths = []
-        print('----------- {} to {} -----------'.format(node1, node2))
+        # print('----------- {} to {} -----------'.format(node1, node2))
 
         # Loop through all pairs of path values
         for val1 in range(len(self.path_vals)):

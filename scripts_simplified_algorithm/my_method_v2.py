@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from statistics import mean
 import matplotlib.pyplot as plt
+from time import time
 
 # Custom things
 import fake_hospital_graph as HospGraph
@@ -15,6 +16,8 @@ import cow_goes_MOO as myMOO
 from dijkstra_options import DijkstraMethod
 import fake_ngsa_method as NGSA
 import pickle
+import warnings
+warnings.filterwarnings("ignore")
 
 def unpickle_it(filename):
     infile = open(filename, 'rb')
@@ -32,33 +35,54 @@ def pickle_it(obj_to_pickle, file_path_and_name):
 if __name__ == '__main__':
 
     # hosp_graph_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/pickles/hospital_trials_2021-02-11_hum_50_70_plus_stats_clean'
-    # ratio_data_filepath = "/home/toothless/workspaces/research_ws/src/hospital-world/pickles/ratio_data_02-22-2021_run02"
 
-    fake_hosp_graph_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/scripts_simplified_algorithm/fake_hospital_graphs/fake_hospital_graph_50_nodes'
     iterations = 1000
     sample_size = 1000
-
-    hosp_graph = HospGraph.unpickle_it(fake_hosp_graph_pickle)
-    sampling_planner = Samp.SamplingPlannerClass(hosp_graph)
-    compare = Compare.CompareMethods(hosp_graph, iterations)
-    dijk = DijkstraMethod(compare.hosp_graph)
-    ngsa = NGSA.NgsaMethod()
-    manipulate = myMOO.ManipulateDF()
 
     moo_vals = ['gausMean', 'gausStd', 'gmmMean0', 'gmmSTD0', 'gmmUpper0', 'gmmLower0', 'gmmMean1', 'gmmSTD1',
                 'gmmUpper1', 'gmmLower1', 'humDist', 'fourConnDist', 'doors', 'navFail']
 
     means_arr = [['gmmUpper1', 'Min'], ['gausMean', 'Min'], ['navFail', 'Min']]
-    min_hum_arr = [['gmmUpper1', 'Min'], ['doors', 'Min']]  #, ['navFail', 'Min']]
+    min_hum_arr = [['humDist', 'Min'], ['doors', 'Min'], ['navFail', 'Min']]
     max_hum_arr = [['humDist', 'Max'], ['fourConnDist', 'Min']]
     evening_arr = [['gmmMean0', 'Min'], ['fourConnDist', 'Min']]
     go_fast = [['gmmMean0', 'Min'], ['fourConnDist', 'Min']]
 
-    goals = ['Not slow', 'Delicate', 'After hours'] #, 'See people', 'GOFAST']
-    methods = [means_arr, min_hum_arr,  evening_arr] #, max_hum_arr, go_fast]
+    goals = ['Not slow']  #, 'Delicate', 'After hours', 'See people'] #, 'GOFAST']
+    methods = [means_arr]  #, min_hum_arr,  evening_arr, max_hum_arr]  # go_fast]
 
-    for n1 in [0]:
-        for n2 in [49]:
+    # methods = []
+    # goals = []
+    #
+    # for i in range(len(moo_vals) - 1):
+    #     for j in range(len(moo_vals)):
+    #         if j <= i:
+    #             continue
+    #         for max_min_a in ['Max', 'Min']:
+    #             for max_min_b in ['Max', 'Min']:
+    #                 methods.append([[moo_vals[i], max_min_a], [moo_vals[j], max_min_b]])
+    #                 goals.append('{}_{}'.format(moo_vals[i], moo_vals[j]))
+    # print(methods)
+
+    node_options = [[16, 4], [20, 4], [25, 5], [30, 5], [35, 5], [42, 7], [49, 7],
+                    [56, 7], [63, 7], [64, 8], [72, 8], [81, 9], [90, 9], [99, 9],
+                    [100, 10], [110, 10], [121, 11], [130, 10], [140, 10], [150, 10]]
+    saw_in_ngsa = 0
+    total_methods = 0
+    for [tot_nodes, loop_by] in node_options:
+        fake_hosp_graph_pickle = '/home/toothless/workspaces/research_ws/src/hospital-world/scripts_simplified_algorithm/' \
+                                 'fake_hospital_graphs/fake_hospital_graph_{}_nodes'.format(tot_nodes)
+        hosp_graph = HospGraph.unpickle_it(fake_hosp_graph_pickle)
+        sampling_planner = Samp.SamplingPlannerClass(hosp_graph)
+        compare = Compare.CompareMethods(hosp_graph, iterations)
+        dijk = DijkstraMethod(compare.hosp_graph)
+        ngsa = NGSA.NgsaMethod()
+        manipulate = myMOO.ManipulateDF()
+
+        nodes_to_compare = [[0, tot_nodes - 1], [loop_by - 1, tot_nodes - loop_by]]
+
+        for [n1, n2] in nodes_to_compare:
+
             # Re-initialize dataframe
             compare.df = pd.DataFrame({'path': [], 'methods': [], 'pathName': [], 'methodNames': [],
                                        'sampleData': [], 'gmmFit': [],
@@ -67,7 +91,12 @@ if __name__ == '__main__':
                                        'gmmData': [], 'navFail': []})
 
             dij_paths = dijk.janky_dijkstra(n1, n2)
-            unique_dij_paths = compare.unique_paths(dij_paths)
+            # unique_dij_paths = compare.unique_paths(dij_paths)
+            unique_dij_paths = []
+
+            for path in dij_paths:
+                if path not in unique_dij_paths:
+                    unique_dij_paths.append(path)
 
             if len(unique_dij_paths) == 1:
                 print(unique_dij_paths[0][1])
@@ -78,12 +107,25 @@ if __name__ == '__main__':
                 manipulate.setup_df_vals()
 
                 for i in range(len(methods)):
-                    print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+
+                    total_methods += 1
+                    # print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
                     moo_method = methods[i]
+                    start_time = time()
                     moo_path = manipulate.get_dominant_path(moo_method)
-                    print("[{:25} [{}]]".format(goals[i], moo_path))
-                    ngsa_path = ngsa.determine_dominance(moo_method)
-                    # print("[{:25} [{}]]".format(' ', ngsa_path))
+                    moo_time = time() - start_time
+                    # print("[{:25} [{}]]".format(goals[i], moo_path))
+                    n_start_time = time()
+
+                    ngsa_paths = ngsa.determine_dominance(moo_method)
+                    ngsa_time = time() - n_start_time
+
+                    # for ngsa_path in ngsa_paths:
+                        # print("[{:25} [{}]]".format(' ', ngsa_path))
+                    # if moo_path in ngsa_paths:
+                    #     saw_in_ngsa += 1
+
+                print('{:10} {:10.5f} {:10.5f}'.format(tot_nodes, moo_time, ngsa_time))
 
 
     # Loop through all room pairs

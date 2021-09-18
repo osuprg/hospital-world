@@ -55,8 +55,9 @@ class NgsaMethod:
             # print(new_dom_list[k], vals_list, self.df.loc[k]['pathName'])
 
         dom_paths = [self.df.loc[l]['pathName'] for l in max_indices]
-        for path in dom_paths:
-            print(path)
+        return dom_paths
+        # for path in dom_paths:
+        #     print(path)
 
 if __name__ == "__main__":
     ngsa = NgsaMethod()

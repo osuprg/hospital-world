@@ -29,28 +29,11 @@ class CompareMethods:
 
     def unique_paths(self, paths):
         # Load the return paths array with the first path in the paths array
-        ret_paths = [paths[0]]
+        ret_paths = []
 
-        # Loop through the paths array
-        for i in range(len(paths)):
-            # print(paths[i][1])
-            in_list = False
-            # We can skip the first path since we already added it
-            if i == 0:
-                continue
-
-            # Loop through the array of paths we're going to return
-            for j in range(len(ret_paths)):
-                # Compare to see the path in paths is already on the return paths list
-                diff0 = [m for m in paths[i] if m not in ret_paths[j]]
-                diff1 = [n for n in ret_paths[j] if n not in paths[i]]
-
-                # If there is little or no difference between the two, it's already on the list
-                if len(diff0) <= 1 and len(diff1) <= 1:
-                    in_list = True
-
-            if not in_list:
-                ret_paths.append(paths[i])
+        for path in paths:
+            if path not in ret_paths:
+                ret_paths.append(path)
 
         return ret_paths
 
