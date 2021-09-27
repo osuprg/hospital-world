@@ -83,6 +83,66 @@ class SamplingPlannerClass:
                 # paths_costs.append(path_len)
         return paths_costs, hum_dist_all
 
+    def run_backward_v3(self, paths, iterations):
+        # Get edge attributes. This is not necessary, but makes the code easier to read
+        pct_hum = nx.get_edge_attributes(self.hosp_graph, 'pct_hum')
+        means_hum = nx.get_edge_attributes(self.hosp_graph, 'mean_hum')
+        std_hum = nx.get_edge_attributes(self.hosp_graph, 'std_hum')
+        means_no = nx.get_edge_attributes(self.hosp_graph, 'mean_no')
+        std_no = nx.get_edge_attributes(self.hosp_graph, 'std_no')
+
+        paths_costs = np.zeros((len(paths), iterations))
+        # [[] for _ in range(len(paths))]
+        # hum_dist_all = [[] for _ in range(len(paths))]
+        hum_dist_all = np.zeros((len(paths), iterations))
+
+        # Run for n iterations
+        for iter_num in range(iterations):
+
+            # For each path
+            for j in range(len(paths)):
+                path = paths[j]
+                hum_dist = 0
+                path_len = 0
+
+                # For each pair of nodes
+                for i in range(len(path) - 1):
+                    n1 = path[i]
+                    n2 = path[i + 1]
+                    human_on_edge = False
+
+                    # Networkx only accepts node pairs in a certain order for this method of calling attributes
+                    try:
+                        curr_pct_hum = pct_hum[n1, n2]
+                    except KeyError:
+                        dummy = n1
+                        n1 = n2
+                        n2 = dummy
+                        curr_pct_hum = pct_hum[n1, n2]
+
+                    if curr_pct_hum and random() < curr_pct_hum:
+                        human_on_edge = True
+
+                    if human_on_edge:
+                        edge_cost = np.random.normal(means_hum[n1, n2], std_hum[n1, n2])
+                        edge_hum_dist = self.hosp_graph[n1][n2]['sq_dist']
+                    else:
+                        # print('no human')
+                        edge_cost = np.random.normal(means_no[n1, n2], std_no[n1, n2])
+                        edge_hum_dist = 0
+
+                    if edge_cost <= 0:
+                        edge_cost = 0.1
+
+                    path_len += edge_cost
+                    hum_dist += edge_hum_dist
+
+                paths_costs[j][iter_num] = path_len
+                hum_dist_all[j][iter_num] = hum_dist
+                # paths_costs.append(path_len)
+
+        return paths_costs, hum_dist_all
+
 
 class DataAccumulated:
     def __init__(self):

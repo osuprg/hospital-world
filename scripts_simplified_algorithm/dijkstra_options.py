@@ -21,8 +21,10 @@ class DijkstraMethod:
         self.val1 = 'mean_all'
         self.val2 = '95_all'
 
-        self.path_vals = ['mean_all', 'std_all', 'mean_no', 'std_no', 'pct_hum', 'sq_dist', 'doors', 'nav_fail']
-        self.weight_options = [1, 5, 10, 100, 1000]
+        # self.path_vals = ['mean_all', 'std_all', 'mean_no', 'std_no', 'pct_hum', 'sq_dist', 'doors', 'nav_fail']
+        self.path_vals = ['95_all', '95_no', 'sq_dist', 'doors']
+        # self.weight_options = [1, 5, 10, 100, 1000]
+        self.weight_options = [1, 10, 100]
         self.all_ratios = []
         self._ratio_pairs()
 
@@ -45,7 +47,7 @@ class DijkstraMethod:
         # Loop through all pairs of path values
         for val1 in range(len(self.path_vals)):
             paths_generator = nx.shortest_simple_paths(self.hosp_graph, node1, node2, weight=self.path_vals[val1])
-            shortest_simple = [i for i in islice(paths_generator, 20)]
+            shortest_simple = [i for i in islice(paths_generator, 10)]
             dummy_num = 0
             for j in shortest_simple:
                 # fun_name = self.path_vals[val1] + str(dummy_num)

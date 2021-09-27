@@ -38,11 +38,19 @@ class CompareMethods:
         return ret_paths
 
     def compare_paths_v2(self, paths):
-        start_time = time()
         tested = 0
-        # costs_real = self.sampling_planner.run_backward_v2(paths, iterations, real_data=True)
-        costs_gaus, hum_dist = self.sampling_planner.run_backward_v2(paths, self.iterations)
         path_lens = []
+
+        # print(len(paths))
+        # start_time = time()
+        costs_gaus, hum_dist = self.sampling_planner.run_backward_v2(paths, self.iterations)
+        # v2_time = time() - start_time
+
+        # start_time = time()
+        # costs_gaus_v3, hum_dist_v3 = self.sampling_planner.run_backward_v3(paths, self.iterations)
+        # v3_time = time() - start_time
+        # print('Sam2 time: {:0.05f}'.format(v2_time))
+        # print('Sam3 time: {:0.05f}'.format(v3_time))
 
         # For each path, fit a GMM
         for i in range(len(paths)):
@@ -64,10 +72,18 @@ class CompareMethods:
                     path_door_ct += self.hosp_graph[n1][n2]['doors']
 
             path_lens.append(path_len)
+
             gmm_fit = self.try_GMM(costs_gaus[i])
+
+            # gmm_fit_v3 = self.try_GMM(costs_gaus_v3[i])
             # Makes sure the mixture models are sorted lowest mean to highest mean
             gmm_dummy = [[gmm_fit.means_[i][0], sqrt(gmm_fit.covariances_[i]), gmm_fit.weights_[i]] for i in range(len(gmm_fit.means_))]
             gmm_data = sorted(gmm_dummy, key=operator.itemgetter(0))
+
+            # gmm_dummy_v3 = [[gmm_fit_v3.means_[i][0], sqrt(gmm_fit_v3.covariances_[i]), gmm_fit_v3.weights_[i]] for i in range(len(gmm_fit_v3.means_))]
+            # gmm_data_v3 = sorted(gmm_dummy_v3, key=operator.itemgetter(0))
+
+            # print("%%%%%%%%%%%%%")
 
             self.df = self.df.append({'path': path, 'methods': methods, 'pathName': path_name, 'methodNames': names,
                                    'sampleData': costs_gaus[i], 'gmmFit': gmm_fit,

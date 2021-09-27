@@ -42,14 +42,14 @@ if __name__ == '__main__':
     moo_vals = ['gausMean', 'gausStd', 'gmmMean0', 'gmmSTD0', 'gmmUpper0', 'gmmLower0', 'gmmMean1', 'gmmSTD1',
                 'gmmUpper1', 'gmmLower1', 'humDist', 'fourConnDist', 'doors', 'navFail']
 
-    means_arr = [['gmmUpper1', 'Min'], ['gausMean', 'Min'], ['navFail', 'Min']]
-    min_hum_arr = [['humDist', 'Min'], ['doors', 'Min'], ['navFail', 'Min']]
+    means_arr = [['gmmUpper1', 'Min'], ['gausMean', 'Min']]  #, ['navFail', 'Min']]
+    min_hum_arr = [['gmmUpper1', 'Min'], ['doors', 'Min']]  #, ['navFail', 'Min']]
     max_hum_arr = [['humDist', 'Max'], ['fourConnDist', 'Min']]
     evening_arr = [['gmmMean0', 'Min'], ['fourConnDist', 'Min']]
     go_fast = [['gmmMean0', 'Min'], ['fourConnDist', 'Min']]
 
-    goals = ['Not slow']  #, 'Delicate', 'After hours', 'See people'] #, 'GOFAST']
-    methods = [means_arr]  #, min_hum_arr,  evening_arr, max_hum_arr]  # go_fast]
+    goals = ['Delicate']  #'Not slow']  #, 'Delicate', 'After hours', 'See people'] #, 'GOFAST']
+    methods = [min_hum_arr]  #means_arr]  #, min_hum_arr,  evening_arr, max_hum_arr]  # go_fast]
 
     # methods = []
     # goals = []
@@ -64,6 +64,7 @@ if __name__ == '__main__':
     #                 goals.append('{}_{}'.format(moo_vals[i], moo_vals[j]))
     # print(methods)
 
+    # node_options = [[30, 5]]
     node_options = [[16, 4], [20, 4], [25, 5], [30, 5], [35, 5], [42, 7], [49, 7],
                     [56, 7], [63, 7], [64, 8], [72, 8], [81, 9], [90, 9], [99, 9],
                     [100, 10], [110, 10], [121, 11], [130, 10], [140, 10], [150, 10]]
@@ -82,6 +83,8 @@ if __name__ == '__main__':
         nodes_to_compare = [[0, tot_nodes - 1], [loop_by - 1, tot_nodes - loop_by]]
 
         for [n1, n2] in nodes_to_compare:
+            node1_node2 = str(n1) + '_' + str(n2)
+            print(node1_node2)
 
             # Re-initialize dataframe
             compare.df = pd.DataFrame({'path': [], 'methods': [], 'pathName': [], 'methodNames': [],
@@ -89,9 +92,7 @@ if __name__ == '__main__':
                                        'humDist': [], 'fourConnDist': [], 'doors': [],
                                        'gausMean': [], 'gausStd': [],
                                        'gmmData': [], 'navFail': []})
-
             dij_paths = dijk.janky_dijkstra(n1, n2)
-            # unique_dij_paths = compare.unique_paths(dij_paths)
             unique_dij_paths = []
 
             for path in dij_paths:
@@ -108,32 +109,9 @@ if __name__ == '__main__':
 
                 for i in range(len(methods)):
 
-                    total_methods += 1
-                    # print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
                     moo_method = methods[i]
-                    start_time = time()
-                    moo_path = manipulate.get_dominant_path(moo_method)
-                    moo_time = time() - start_time
-                    # print("[{:25} [{}]]".format(goals[i], moo_path))
-                    n_start_time = time()
+                    # moo_path = manipulate.get_dominant_path(moo_method)
+                    # ngsa_paths = ngsa.determine_dominance(moo_method)
+                    ngsa_paths = ngsa.determine_dominance_v2(moo_method)
+                    ngsa.ngsa_graph(moo_method, node1_node2)
 
-                    ngsa_paths = ngsa.determine_dominance(moo_method)
-                    ngsa_time = time() - n_start_time
-
-                    # for ngsa_path in ngsa_paths:
-                        # print("[{:25} [{}]]".format(' ', ngsa_path))
-                    # if moo_path in ngsa_paths:
-                    #     saw_in_ngsa += 1
-
-                print('{:10} {:10.5f} {:10.5f}'.format(tot_nodes, moo_time, ngsa_time))
-
-
-    # Loop through all room pairs
-    # for rm1 in range(21):
-    #     for rm2 in range(21):
-    #         if rm2 <= rm1:
-    #             continue
-    # for rm1 in [0]:  # , 1, 2]:
-    #     for rm2 in [10]:  # , 11, 12, 13, 14, 15, 16]:
-    #         n1 = 'r' + "{:02d}".format(rm1)
-    #         n2 = 'r' + "{:02d}".format(rm2)
