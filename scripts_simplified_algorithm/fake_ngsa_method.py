@@ -5,15 +5,18 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-
+from topsis import Topsis
 
 class NgsaMethod:
     def __init__(self):
         self.df = None
         self.num_paths = 0
+        # self._setup_df()
 
-    def get_dom_values(self, vals_comp_list):
-        pass
+    def setup_df(self):
+        for ind in self.df.index:
+
+            self.df.at[ind, 'ID'] = ind
 
     def determine_dominance(self, vals_comp_list, return_vals=False):
         self.num_paths = self.df.index.stop
@@ -78,8 +81,6 @@ class NgsaMethod:
         # for path in dom_paths:
         #     print(path)
 
-
-
     def determine_dominance_v2(self, vals_comp_list, return_vals=False):
         self.num_paths = self.df.index.stop
         dom_list = np.zeros((self.num_paths, 2))
@@ -111,28 +112,55 @@ class NgsaMethod:
                     self.df.at[j, 'dom_by'] += 1
 
         self.df['dom_num'] = self.df['dom'] - self.df['dom_by']
-        print(self.df[[vals_comp_list[0][0], vals_comp_list[1][0], 'dom', 'dom_by']])
+        # print(self.df[[vals_comp_list[0][0], vals_comp_list[1][0], 'dom', 'dom_by']])
 
         pareto = np.where(self.df['dom_by'] == 0)[0]
 
         scaled_dom_list = []
         min_dom = abs(self.df['dom_num'].min()) + 1
-
         self.df['scaled_dom'] = self.df['dom_num'] + min_dom
 
         max_val = self.df['dom_num'].max()
-        max_indices = np.where(self.df['dom_num'] == max_val)[0]
+        # max_indices = np.where(self.df['dom_num'] == max_val)[0]
         self.df['color'] = 'red'
+        self.df['pareto'] = 'no'
         for pareto_index in pareto:
             self.df.at[pareto_index, 'color'] = 'darkgoldenrod'
-        for best_index in max_indices:
-            self.df.at[best_index, 'color'] = 'blue'
-            self.df.at[best_index, 'scaled_dom'] = self.df.loc[best_index]['scaled_dom'] * 3
-        dom_paths = [self.df.loc[l]['pathName'] for l in max_indices]
+            self.df.at[pareto_index, 'pareto'] = 'yes'
+        dom_paths = self.df[self.df['dom_num'] == max_val]
+        # print(dom_paths[[vals_comp_list[0][0], vals_comp_list[1][0]]])
+        best_index = dom_paths[[vals_comp_list[0][0]]].idxmin()[0]
+        # print(best_index)
+
+        self.df.at[best_index, 'color'] = 'blue'
+        self.df.at[best_index, 'scaled_dom'] = self.df.loc[best_index]['scaled_dom'] * 3
+
         return dom_paths
         # for path in dom_paths:
         #     print(path)
 
+    def use_topsis(self, vals):
+        pareto_df = self.df[self.df['pareto'] == 'yes']
+        eval_matrix = pareto_df[['ID', vals[0][0], vals[1][0]]].to_numpy(copy=True)
+        # print(eval_matrix)
+        weights = [0, 1, 1]
+        criterion = np.array([False, False, False])
+        t = Topsis(eval_matrix, weights, criterion)
+        t.calc()
+        ranked_list = t.rank_to_best_similarity()
+        # best_index = eval_matrix[ranked_list[0]][0]
+        print(ranked_list)
+        print(eval_matrix)
+        # self.df.at[best_index, 'color'] = 'blue'
+        # self.df.at[best_index, 'scaled_dom'] = self.df.loc[best_index]['scaled_dom'] * 3
+        # print("best_distance\t", t.best_distance)
+        # print("worst_distance\t", t.worst_distance)
+        #
+        # print("worst_similarity\t", t.worst_similarity)
+        # print("rank_to_worst_similarity\t", t.rank_to_worst_similarity())
+        #
+        # print("best_similarity\t", t.best_similarity)
+        # print("rank_to_best_similarity\t", t.rank_to_best_similarity())
 
     def ngsa_graph(self, vals, name):
         x_vals = vals[0][0]
@@ -140,7 +168,7 @@ class NgsaMethod:
 
         self.df.plot(kind="scatter", x=x_vals, y=y_vals, s='scaled_dom', c=self.df.color)
         plt.title(name)
-        plt.savefig(name)
+        plt.savefig('{}_case_03_runoff.svg'.format(name))
 
 
 if __name__ == "__main__":

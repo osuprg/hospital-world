@@ -18,8 +18,8 @@ class ManipulateDF:
         single_val = ['humDist', 'fourConnDist', 'gausMean', 'gausStd', 'doors', 'navFail']
 
         # Scales values to
-        for val in single_val:
-            self._add_scaled_val(val)
+        # for val in single_val:
+        #     self._add_scaled_val(val)
 
         self._scale_gmm_data()
 

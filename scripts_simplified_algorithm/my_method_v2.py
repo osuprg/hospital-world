@@ -44,12 +44,12 @@ if __name__ == '__main__':
 
     means_arr = [['gmmUpper1', 'Min'], ['gausMean', 'Min']]  #, ['navFail', 'Min']]
     min_hum_arr = [['gmmUpper1', 'Min'], ['doors', 'Min']]  #, ['navFail', 'Min']]
-    max_hum_arr = [['humDist', 'Max'], ['fourConnDist', 'Min']]
+    do_it_for_the_pareto = [['humDist', 'Min'], ['gmmMean0', 'Min']]
     evening_arr = [['gmmMean0', 'Min'], ['fourConnDist', 'Min']]
     go_fast = [['gmmMean0', 'Min'], ['fourConnDist', 'Min']]
 
-    goals = ['Delicate']  #'Not slow']  #, 'Delicate', 'After hours', 'See people'] #, 'GOFAST']
-    methods = [min_hum_arr]  #means_arr]  #, min_hum_arr,  evening_arr, max_hum_arr]  # go_fast]
+    goals = ['Delicate', 'ForThePareto']  #'Not slow']  #, 'Delicate', 'After hours', 'See people'] #, 'GOFAST']
+    methods = [min_hum_arr, do_it_for_the_pareto]  #means_arr]  #, min_hum_arr,  evening_arr, max_hum_arr]  # go_fast]
 
     # methods = []
     # goals = []
@@ -81,10 +81,11 @@ if __name__ == '__main__':
         manipulate = myMOO.ManipulateDF()
 
         nodes_to_compare = [[0, tot_nodes - 1], [loop_by - 1, tot_nodes - loop_by]]
+        # nodes_to_compare = [[0, tot_nodes - 1]]
 
         for [n1, n2] in nodes_to_compare:
-            node1_node2 = str(n1) + '_' + str(n2)
-            print(node1_node2)
+
+            # print(node1_node2)
 
             # Re-initialize dataframe
             compare.df = pd.DataFrame({'path': [], 'methods': [], 'pathName': [], 'methodNames': [],
@@ -104,14 +105,18 @@ if __name__ == '__main__':
             else:
                 compare.compare_paths_v2(unique_dij_paths)
                 ngsa.df = compare.df
+                ngsa.setup_df()
                 manipulate.df = compare.df
                 manipulate.setup_df_vals()
 
                 for i in range(len(methods)):
 
                     moo_method = methods[i]
+                    node1_node2 = goals[i] + "_" + str(n1) + '_' + str(n2)
                     # moo_path = manipulate.get_dominant_path(moo_method)
                     # ngsa_paths = ngsa.determine_dominance(moo_method)
                     ngsa_paths = ngsa.determine_dominance_v2(moo_method)
+                    # print(ngsa_paths)
+                    # ngsa.use_topsis(moo_method)
                     ngsa.ngsa_graph(moo_method, node1_node2)
 
